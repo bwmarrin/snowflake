@@ -21,6 +21,21 @@ func BenchmarkGenerateChan(b *testing.B) {
 }
 
 // Benchmarks Presence Update event with fake data.
+func BenchmarkGenerateChanParallel(b *testing.B) {
+
+	node, _ := NewFlakeNode(1)
+	c := make(chan Flake)
+	go node.Generator(c)
+
+	b.ReportAllocs()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			<-c
+		}
+	})
+}
+
+// Benchmarks Presence Update event with fake data.
 func BenchmarkGenerate(b *testing.B) {
 
 	node, _ := NewFlakeNode(1)
