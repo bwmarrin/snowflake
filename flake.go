@@ -70,6 +70,7 @@ func (n *Node) Generator(c chan Flake) {
 
 			if n.step == 0 {
 				// wait for ticker..
+				// haha, funny, this isn't fast enough to ever get here.
 			}
 		case <-ticker.C:
 			now++
@@ -126,6 +127,58 @@ func (n *Node) Generate() (Flake, error) {
 		if n.step == 0 {
 			for now <= n.lastTime {
 				time.Sleep(100 * time.Microsecond)
+				now = time.Now().UnixNano() / 1000000
+			}
+		}
+	} else {
+		n.step = 0
+	}
+
+	n.lastTime = now
+
+	return Flake((now-n.epoch)<<TimeShift |
+		(n.node << NodeShift) |
+		(n.step),
+	), nil
+}
+
+// Return a freshly generated Flake ID
+func (n *Node) GenerateNoSleep() (Flake, error) {
+
+	now := time.Now().UnixNano() / 1000000
+
+	if n.lastTime == now {
+		n.step = (n.step + 1) & StepMask
+
+		if n.step == 0 {
+			for now <= n.lastTime {
+				now = time.Now().UnixNano() / 1000000
+			}
+		}
+	} else {
+		n.step = 0
+	}
+
+	n.lastTime = now
+
+	return Flake((now-n.epoch)<<TimeShift |
+		(n.node << NodeShift) |
+		(n.step),
+	), nil
+}
+
+// Return a freshly generated Flake ID
+func (n *Node) GenerateNoSleepLock() (Flake, error) {
+	n.Lock()
+	defer n.Unlock()
+
+	now := time.Now().UnixNano() / 1000000
+
+	if n.lastTime == now {
+		n.step = (n.step + 1) & StepMask
+
+		if n.step == 0 {
+			for now <= n.lastTime {
 				now = time.Now().UnixNano() / 1000000
 			}
 		}
