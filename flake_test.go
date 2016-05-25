@@ -7,6 +7,20 @@ import (
 //////////////////////////////////////////////////////////////////////////////
 
 // Benchmarks Presence Update event with fake data.
+func BenchmarkGenerateChan(b *testing.B) {
+
+	node, _ := NewFlakeNode(1)
+	c := make(chan Flake)
+	go node.Generator(c)
+
+	b.ReportAllocs()
+	for n := 0; n < b.N; n++ {
+		<-c
+	}
+
+}
+
+// Benchmarks Presence Update event with fake data.
 func BenchmarkGenerate(b *testing.B) {
 
 	node, _ := NewFlakeNode(1)

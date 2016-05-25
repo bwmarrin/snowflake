@@ -54,8 +54,28 @@ func NewFlakeNode(node int64) (*Node, error) {
 }
 
 // high performance generator
+// well, that w as the idea...
 func (n *Node) Generator(c chan Flake) {
 
+	ticker := time.NewTicker(time.Millisecond)
+	now := int64(time.Now().UnixNano() / 1000000)
+	for {
+
+		n.step = 0
+
+		select {
+		case c <- Flake((now-n.epoch)<<TimeShift | (n.node << NodeShift) | (n.step)):
+
+			n.step = (n.step + 1) & StepMask
+
+			if n.step == 0 {
+				// wait for ticker..
+			}
+		case <-ticker.C:
+			now++
+			// continue
+		}
+	}
 }
 
 // Return a freshly generated Flake ID
