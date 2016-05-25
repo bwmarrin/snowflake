@@ -1,10 +1,3 @@
-// generates IDs for Tasktic
-// Based on the common flake/snowflake implementations
-// 41bit timestamp, 10bit node, 12bit sequence
-// can build 4096 unique IDs per millisecond per node.
-// node ID must be defined and you should insure the
-// system can maintaine accurate time on all nodes.
-
 // simple generator for..
 // Twitter Snowflake with custom definable epoch
 
