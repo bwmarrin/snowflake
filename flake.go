@@ -140,7 +140,6 @@ func (f *ID) UnmarshalJSON(b []byte) error {
 	s := strings.Replace(string(b), `"`, ``, 2)
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
