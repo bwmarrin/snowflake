@@ -1,5 +1,4 @@
-// Package flake provides a very simple Twitter Snowflake generator and parser.
-// You can optionally set a custom epoch for you use.
+// Package flake provides a very simple Twitter snowflake generator and parser.
 package flake
 
 import (
