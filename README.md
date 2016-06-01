@@ -65,3 +65,23 @@ func main() {
         fmt.Printf("ID Step  : %d\n", id.Step())
 }
 ```
+
+### Performance
+
+The flake generator should be sufficiently fast enough of most systems to 
+generate the maximum or near of 4096 unique ID's per millisecond that the 
+snowflake ID supports. That is, around 243-244 nanoseconds per operation. 
+
+Since the flake generator is single threaded the primary limitation will be
+the maximum speed of a single processor on your system.
+
+To benchmark the generator on your system run the following command inside the
+package directory.
+
+```sh
+go test -bench=.
+```
+
+Also, if your curious, check out this commit that shows benchmarks that compare
+a few different ways of implementing a generator.
+*  https://github.com/bwmarrin/flake/tree/9befef8908df13f4102ed21f42b083dd862b5036
