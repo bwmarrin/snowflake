@@ -3,8 +3,8 @@ flake
 [![GoDoc](https://godoc.org/github.com/bwmarrin/flake?status.svg)](https://godoc.org/github.com/bwmarrin/flake) [![Go report](http://goreportcard.com/badge/bwmarrin/flake)](http://goreportcard.com/report/bwmarrin/flake) [![Build Status](https://travis-ci.org/bwmarrin/flake.svg?branch=master)](https://travis-ci.org/bwmarrin/flake) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-general-blue.svg)](https://discord.gg/0f1SbxBZjYoCtNPP)
 
 flake is a [Go](https://golang.org/) package that provides
-* A very simple twitter snowflake Generator
-* Methods to parse existing snowflake IDs
+* A very simple twitter snowflake Generator.
+* Methods to parse existing snowflake IDs.
 * Methods to convert a snowflake ID into several other data types.
 * JSON Marshal/Unmarshal functions to easily use flake IDs within a JSON API.
 
