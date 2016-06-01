@@ -2,9 +2,11 @@ flake
 ====
 [![GoDoc](https://godoc.org/github.com/bwmarrin/flake?status.svg)](https://godoc.org/github.com/bwmarrin/flake) [![Go report](http://goreportcard.com/badge/bwmarrin/flake)](http://goreportcard.com/report/bwmarrin/flake) [![Build Status](https://travis-ci.org/bwmarrin/flake.svg?branch=master)](https://travis-ci.org/bwmarrin/flake) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-general-blue.svg)](https://discord.gg/0f1SbxBZjYoCtNPP)
 
-flake is a [Go](https://golang.org/) package that provides a very simple twitter
-snowflake ID generator along with several functions to convert an ID into 
-different formats.
+flake is a [Go](https://golang.org/) package that provides
+* A very simple twitter snowflake Generator
+* Methods to parse existing snowflake IDs
+* Methods to convert a snowflake ID into several other data types.
+* JSON Marshal/Unmarshal functions to easily use flake IDs within a JSON API.
 
 ## Getting Started
 
@@ -20,9 +22,13 @@ go get github.com/bwmarrin/flake
 ### Usage
 
 Import the package into your project then construct a new flake Node using a
-unique node number from 0 to 1023.  With the node object call the Generate()
-method to generate and return a unique snowflake ID. Also MarshalJSON and
-UnmarshalJSON methods are provided to easily use these ID's with a JSON API.
+unique node number from 0 to 1023. With the node object call the Generate() 
+method to generate and return a unique snowflake ID. 
+
+Keep in mind that each node you create must have a unique node number, even 
+across multiple servers.  If you do not keep node numbers unique the generator 
+cannot guarantee unique IDs across all nodes.
+
 
 **Example Program:**
 
@@ -69,20 +75,20 @@ func main() {
 
 ### Performance
 
-The flake generator should be sufficiently fast enough of most systems to 
-generate the maximum or near of 4096 unique ID's per millisecond that the 
-snowflake ID supports. That is, around 243-244 nanoseconds per operation. 
+The flake generator should be sufficiently fast enough on most systems to 
+generate 4096 unique ID's per millisecond. This is the maximum that the 
+snowflake ID format supports. That is, around 243-244 nanoseconds per operation. 
 
 Since the flake generator is single threaded the primary limitation will be
 the maximum speed of a single processor on your system.
 
 To benchmark the generator on your system run the following command inside the
-package directory.
+flake package directory.
 
 ```sh
 go test -bench=.
 ```
 
-Also, if your curious, check out this commit that shows benchmarks that compare
-a few different ways of implementing a generator.
+If your curious, check out this commit that shows benchmarks that compare a few 
+different ways of implementing a snowflake generator in Go.
 *  https://github.com/bwmarrin/flake/tree/9befef8908df13f4102ed21f42b083dd862b5036
