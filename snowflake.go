@@ -1,5 +1,5 @@
-// Package flake provides a very simple Twitter snowflake generator and parser.
-package flake
+// Package snowflake provides a very simple Twitter snowflake generator and parser.
+package snowflake
 
 import (
 	"encoding/base64"
@@ -29,7 +29,8 @@ const (
 // You may customize this to set a different epoch for your application.
 var Epoch int64 = 1288834974657
 
-// A Node struct holds the basic information needed for a flake generator node
+// A Node struct holds the basic information needed for a snowflake generator
+// node
 type Node struct {
 	sync.Mutex
 	time int64
@@ -41,7 +42,8 @@ type Node struct {
 // attach methods onto the ID.
 type ID int64
 
-// NewNode returns a new Flake node that can be used to generate flake IDs
+// NewNode returns a new snowflake node that can be used to generate snowflake
+// IDs
 func NewNode(node int64) (*Node, error) {
 
 	if node < 0 || node > nodeMax {

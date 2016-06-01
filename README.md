@@ -1,12 +1,12 @@
-flake
+snowflake
 ====
-[![GoDoc](https://godoc.org/github.com/bwmarrin/flake?status.svg)](https://godoc.org/github.com/bwmarrin/flake) [![Go report](http://goreportcard.com/badge/bwmarrin/flake)](http://goreportcard.com/report/bwmarrin/flake) [![Build Status](https://travis-ci.org/bwmarrin/flake.svg?branch=master)](https://travis-ci.org/bwmarrin/flake) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23info-blue.svg)](https://discord.gg/0f1SbxBZjYq9jLBk)
+[![GoDoc](https://godoc.org/github.com/bwmarrin/snowflake?status.svg)](https://godoc.org/github.com/bwmarrin/snowflake) [![Go report](http://goreportcard.com/badge/bwmarrin/snowflake)](http://goreportcard.com/report/bwmarrin/snowflake) [![Build Status](https://travis-ci.org/bwmarrin/snowflake.svg?branch=master)](https://travis-ci.org/bwmarrin/snowflake) [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23info-blue.svg)](https://discord.gg/0f1SbxBZjYq9jLBk)
 
-flake is a [Go](https://golang.org/) package that provides
+snowflake is a [Go](https://golang.org/) package that provides
 * A very simple Twitter snowflake generator.
 * Methods to parse existing snowflake IDs.
 * Methods to convert a snowflake ID into several other data types.
-* JSON Marshal/Unmarshal functions to easily use flake IDs within a JSON API.
+* JSON Marshal/Unmarshal functions to easily use snowflake IDs within a JSON API.
 
 **For help with this package or general Go discussion, please join the [Discord 
 Gophers](https://discord.gg/0f1SbxBZjYq9jLBk) chat server.**
@@ -19,12 +19,12 @@ This assumes you already have a working Go environment, if not please see
 [this page](https://golang.org/doc/install) first.
 
 ```sh
-go get github.com/bwmarrin/flake
+go get github.com/bwmarrin/snowflake
 ```
 
 ### Usage
 
-Import the package into your project then construct a new flake Node using a
+Import the package into your project then construct a new snowflake Node using a
 unique node number from 0 to 1023. With the node object call the Generate() 
 method to generate and return a unique snowflake ID. 
 
@@ -40,13 +40,13 @@ package main
 
 import (
         "fmt"
-        "github.com/bwmarrin/flake"
+        "github.com/bwmarrin/snowflake"
 )
 
 func main() {
 
         // Create a new Node with a Node number of 1
-        node, err := flake.NewNode(1)
+        node, err := snowflake.NewNode(1)
         if err != nil {
                 fmt.Println(err)
                 return
@@ -78,15 +78,15 @@ func main() {
 
 ### Performance
 
-The flake generator should be sufficiently fast enough on most systems to 
+This snowflake generator should be sufficiently fast enough on most systems to 
 generate 4096 unique ID's per millisecond. This is the maximum that the 
 snowflake ID format supports. That is, around 243-244 nanoseconds per operation. 
 
-Since the flake generator is single threaded the primary limitation will be
+Since the snowflake generator is single threaded the primary limitation will be
 the maximum speed of a single processor on your system.
 
 To benchmark the generator on your system run the following command inside the
-flake package directory.
+snowflake package directory.
 
 ```sh
 go test -bench=.
@@ -94,4 +94,4 @@ go test -bench=.
 
 If your curious, check out this commit that shows benchmarks that compare a few 
 different ways of implementing a snowflake generator in Go.
-*  https://github.com/bwmarrin/flake/tree/9befef8908df13f4102ed21f42b083dd862b5036
+*  https://github.com/bwmarrin/snowflake/tree/9befef8908df13f4102ed21f42b083dd862b5036
