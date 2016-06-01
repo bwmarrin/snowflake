@@ -7,7 +7,6 @@ snowflake is a [Go](https://golang.org/) package that provides
 * Methods to parse existing snowflake IDs.
 * Methods to convert a snowflake ID into several other data types.
 * JSON Marshal/Unmarshal functions to easily use snowflake IDs within a JSON API.
-* http.Handler interface to easily serve snowflake IDs over HTTP.
 
 **For help with this package or general Go discussion, please join the [Discord 
 Gophers](https://discord.gg/0f1SbxBZjYq9jLBk) chat server.**
@@ -41,7 +40,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/bwmarrin/snowflake"
 )
@@ -76,10 +74,6 @@ func main() {
 
 	// Print out the ID's sequence number
 	fmt.Printf("ID Step  : %d\n", id.Step())
-
-	// Start HTTP Server for this Node on port 8080
-	http.ListenAndServe(":8080", node)
-
 }
 ```
 
