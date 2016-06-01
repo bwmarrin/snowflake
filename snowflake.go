@@ -4,6 +4,7 @@ package snowflake
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -83,6 +84,15 @@ func (n *Node) Generate() (ID, error) {
 		(n.node << nodeShift) |
 		(n.step),
 	), nil
+}
+
+func (n *Node) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	id, err := n.Generate()
+	if err != nil {
+		http.Error(w, "Internal Error", 500)
+	}
+	fmt.Fprint(w, id)
 }
 
 // Int64 returns an int64 of the snowflake ID

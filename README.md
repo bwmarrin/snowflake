@@ -7,6 +7,7 @@ snowflake is a [Go](https://golang.org/) package that provides
 * Methods to parse existing snowflake IDs.
 * Methods to convert a snowflake ID into several other data types.
 * JSON Marshal/Unmarshal functions to easily use snowflake IDs within a JSON API.
+* http.Handler interface to easily serve snowflake IDs over HTTP.
 
 **For help with this package or general Go discussion, please join the [Discord 
 Gophers](https://discord.gg/0f1SbxBZjYq9jLBk) chat server.**
@@ -39,40 +40,46 @@ cannot guarantee unique IDs across all nodes.
 package main
 
 import (
-        "fmt"
-        "github.com/bwmarrin/snowflake"
+	"fmt"
+	"net/http"
+
+	"github.com/bwmarrin/snowflake"
 )
 
 func main() {
 
-        // Create a new Node with a Node number of 1
-        node, err := snowflake.NewNode(1)
-        if err != nil {
-                fmt.Println(err)
-                return
-        }
+	// Create a new Node with a Node number of 1
+	node, err := snowflake.NewNode(1)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-        // Generate a snowflake ID.
-        id, err := node.Generate()
-        if err != nil {
-                fmt.Println(err)
-                return
-        }
+	// Generate a snowflake ID.
+	id, err := node.Generate()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-        // Print out the ID in a few different ways.
-        fmt.Printf("Int64  ID: %d\n", id)
-        fmt.Printf("String ID: %s\n", id)
-        fmt.Printf("Base2  ID: %s\n", id.Base2())
-        fmt.Printf("Base64 ID: %s\n", id.Base64())
+	// Print out the ID in a few different ways.
+	fmt.Printf("Int64  ID: %d\n", id)
+	fmt.Printf("String ID: %s\n", id)
+	fmt.Printf("Base2  ID: %s\n", id.Base2())
+	fmt.Printf("Base64 ID: %s\n", id.Base64())
 
-        // Print out the ID's timestamp
-        fmt.Printf("ID Time  : %d\n", id.Time())
+	// Print out the ID's timestamp
+	fmt.Printf("ID Time  : %d\n", id.Time())
 
-        // Print out the ID's node number
-        fmt.Printf("ID Node  : %d\n", id.Node())
+	// Print out the ID's node number
+	fmt.Printf("ID Node  : %d\n", id.Node())
 
-        // Print out the ID's sequence number
-        fmt.Printf("ID Step  : %d\n", id.Step())
+	// Print out the ID's sequence number
+	fmt.Printf("ID Step  : %d\n", id.Step())
+
+	// Start HTTP Server for this Node on port 8080
+	http.ListenAndServe(":8080", node)
+
 }
 ```
 
