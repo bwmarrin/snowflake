@@ -10,7 +10,7 @@ func BenchmarkGenerate(b *testing.B) {
 
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
-		_, _ = node.GenerateNoSleep()
+		_, _ = node.Generate()
 	}
 
 }
