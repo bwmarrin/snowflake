@@ -1,4 +1,4 @@
-package flake
+package snowflake
 
 import (
 	"testing"
