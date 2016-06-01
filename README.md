@@ -1,12 +1,7 @@
-# flake
+flake
 ====
 [![GoDoc](https://godoc.org/github.com/bwmarrin/flake?status.svg)](https://godoc.org/github.com/bwmarrin/flake) [![Go report](http://goreportcard.com/badge/bwmarrin/flake)](http://goreportcard.com/report/bwmarrin/flake) [![Build Status](https://travis-ci.org/bwmarrin/flake.svg?branch=master)](https://travis-ci.org/bwmarrin/flake) 
 [![Discord Gophers](https://img.shields.io/badge/Discord%20Gophers-%23flake.svg)](https://discord.gg/0f1SbxBZjYoCtNPP)
-
-flake is a Google Go (golang) package that provides a very simple twitter 
-snowflake generator.
-
-====
 
 flake is a [Go](https://golang.org/) package that provides a very simple twitter
 snowflake ID generator along with several functions to convert an ID into 
