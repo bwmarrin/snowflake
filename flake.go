@@ -1,102 +1,74 @@
-// simple generator for..
-// Twitter Snowflake with custom definable epoch
-
+// Package flake provides a very simple Twitter Snowflake generator and parser.
+// You can optionally set a custom epoch for you use.
 package flake
 
-import "encoding/base64"
-import "fmt"
-import "strconv"
-import "sync"
-import "time"
-
-const (
-	TimeBits = 41
-	NodeBits = 10
-	StepBits = 12
-
-	TimeMask int64 = -1 ^ (-1 << TimeBits)
-	NodeMask int64 = -1 ^ (-1 << NodeBits)
-	StepMask int64 = -1 ^ (-1 << StepBits)
-
-	NodeMax = -1 ^ (-1 << NodeBits)
-
-	TimeShift uint8 = NodeBits + StepBits
-	NodeShift uint8 = StepBits
+import (
+	"encoding/base64"
+	"fmt"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
+const (
+	timeBits = 41
+	nodeBits = 10
+	stepBits = 12
+
+	timeMask int64 = -1 ^ (-1 << timeBits)
+	nodeMask int64 = -1 ^ (-1 << nodeBits)
+	stepMask int64 = -1 ^ (-1 << stepBits)
+
+	nodeMax = -1 ^ (-1 << nodeBits)
+
+	timeShift uint8 = nodeBits + stepBits
+	nodeShift uint8 = stepBits
+)
+
+// Epoch is set to the twitter snowflake epoch of 2006-03-21:20:50:14 GMT
+// You may customize this to set a different epoch for your application.
+var Epoch int64 = 1288834974657
+
+// A Node struct holds the basic information needed for a flake generator node
 type Node struct {
-	sync.Mutex // TODO: find a way to avoid locks?
-
-	// configurable values
-	epoch int64
-	node  int64
-
-	// runtime tracking values
-	lastTime int64
-	step     int64
+	sync.Mutex
+	time int64
+	node int64
+	step int64
 }
 
-// Start a new Flake factory / server node using the given node number
-// sets with default settings, use helper functions to change
-// node, epoch, etc.
-func NewFlakeNode(node int64) (*Node, error) {
+// An ID is a custom type used for a snowflake ID.  This is used so we can
+// attach methods onto the ID.
+type ID int64
 
-	if node < 0 || node > NodeMax {
-		return nil, fmt.Errorf("Invalid node number.")
+// NewNode returns a new Flake node that can be used to generate flake IDs
+func NewNode(node int64) (*Node, error) {
+
+	if node < 0 || node > nodeMax {
+		return nil, fmt.Errorf("Node number must be between 0 and 1023")
 	}
 
 	return &Node{
-		epoch:    time.Date(2016, 1, 0, 0, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond),
-		node:     node,
-		lastTime: 0,
-		step:     0,
+		time: 0,
+		node: node,
+		step: 0,
 	}, nil
 }
 
-// high performance generator
-// well, that w as the idea...
-func (n *Node) Generator(c chan Flake) {
-
-	ticker := time.NewTicker(time.Millisecond)
-	now := int64(time.Now().UnixNano() / 1000000)
-	for {
-
-		n.step = 0
-
-		select {
-		case c <- Flake((now-n.epoch)<<TimeShift | (n.node << NodeShift) | (n.step)):
-
-			n.step = (n.step + 1) & StepMask
-
-			if n.step == 0 {
-				// wait for ticker..
-				// haha, funny, this isn't fast enough to ever get here.
-			}
-		case <-ticker.C:
-			now++
-			// continue
-		}
-	}
-}
-
-// Return a freshly generated Flake ID
-func (n *Node) LockedGenerate() (Flake, error) {
+// Generate creates and returns a unique snowflake ID
+func (n *Node) Generate() (ID, error) {
 
 	n.Lock()
 	defer n.Unlock()
 
 	now := time.Now().UnixNano() / 1000000
 
-	if n.lastTime > now {
-		return 0, fmt.Errorf("Invalid system time.")
-	}
-
-	if n.lastTime == now {
-		n.step = (n.step + 1) & StepMask
+	if n.time == now {
+		n.step = (n.step + 1) & stepMask
 
 		if n.step == 0 {
-			for now <= n.lastTime {
-				time.Sleep(100 * time.Microsecond)
+			for now <= n.time {
 				now = time.Now().UnixNano() / 1000000
 			}
 		}
@@ -104,129 +76,75 @@ func (n *Node) LockedGenerate() (Flake, error) {
 		n.step = 0
 	}
 
-	n.lastTime = now
+	n.time = now
 
-	return Flake((now-n.epoch)<<TimeShift |
-		(n.node << NodeShift) |
+	return ID((now-Epoch)<<timeShift |
+		(n.node << nodeShift) |
 		(n.step),
 	), nil
 }
 
-// Return a freshly generated Flake ID
-func (n *Node) Generate() (Flake, error) {
-
-	now := time.Now().UnixNano() / 1000000
-
-	if n.lastTime > now {
-		return 0, fmt.Errorf("Invalid system time.")
-	}
-
-	if n.lastTime == now {
-		n.step = (n.step + 1) & StepMask
-
-		if n.step == 0 {
-			for now <= n.lastTime {
-				time.Sleep(100 * time.Microsecond)
-				now = time.Now().UnixNano() / 1000000
-			}
-		}
-	} else {
-		n.step = 0
-	}
-
-	n.lastTime = now
-
-	return Flake((now-n.epoch)<<TimeShift |
-		(n.node << NodeShift) |
-		(n.step),
-	), nil
+// Int64 returns an int64 of the snowflake ID
+func (f ID) Int64() int64 {
+	return int64(f)
 }
 
-// Return a freshly generated Flake ID
-func (n *Node) GenerateNoSleep() (Flake, error) {
-
-	now := time.Now().UnixNano() / 1000000
-
-	if n.lastTime == now {
-		n.step = (n.step + 1) & StepMask
-
-		if n.step == 0 {
-			for now <= n.lastTime {
-				now = time.Now().UnixNano() / 1000000
-			}
-		}
-	} else {
-		n.step = 0
-	}
-
-	n.lastTime = now
-
-	return Flake((now-n.epoch)<<TimeShift |
-		(n.node << NodeShift) |
-		(n.step),
-	), nil
-}
-
-// Return a freshly generated Flake ID
-func (n *Node) GenerateNoSleepLock() (Flake, error) {
-	n.Lock()
-	defer n.Unlock()
-
-	now := time.Now().UnixNano() / 1000000
-
-	if n.lastTime == now {
-		n.step = (n.step + 1) & StepMask
-
-		if n.step == 0 {
-			for now <= n.lastTime {
-				now = time.Now().UnixNano() / 1000000
-			}
-		}
-	} else {
-		n.step = 0
-	}
-
-	n.lastTime = now
-
-	return Flake((now-n.epoch)<<TimeShift |
-		(n.node << NodeShift) |
-		(n.step),
-	), nil
-}
-
-type Flake int64
-type Flakes []*Flake
-
-func (f Flake) String() string {
+// String returns a string of the snowflake ID
+func (f ID) String() string {
 	return fmt.Sprintf("%d", f)
 }
 
-func (f Flake) Base2() string {
+// Base2 returns a string base2 of the snowflake ID
+func (f ID) Base2() string {
 	return strconv.FormatInt(int64(f), 2)
 }
-func (f Flake) Base36() string {
+
+// Base36 returns a base36 string of the snowflake ID
+func (f ID) Base36() string {
 	return strconv.FormatInt(int64(f), 36)
 }
 
-func (f Flake) Base64() string {
-	return base64.StdEncoding.EncodeToString(f.Byte())
+// Base64 returns a base64 string of the snowflake ID
+func (f ID) Base64() string {
+	return base64.StdEncoding.EncodeToString(f.Bytes())
 }
 
-func (f Flake) Byte() []byte {
+// Bytes returns a byte array of the snowflake ID
+func (f ID) Bytes() []byte {
 	return []byte(f.String())
 }
 
-func (f Flake) Time() int64 {
-	// ugh.. TODO
-	// epoch is supposed to be configurable.....
-	Epoch := time.Date(2016, 1, 0, 0, 0, 0, 0, time.UTC).UnixNano() / int64(time.Millisecond)
+// Time returns an int64 unix timestamp of the snowflake ID time
+func (f ID) Time() int64 {
 	return (int64(f) >> 22) + Epoch
 }
 
-func (f Flake) Node() int64 {
+// Node returns an int64 of the snowflake ID node number
+func (f ID) Node() int64 {
 	return int64(f) & 0x00000000003FF000 >> 12
 }
 
-func (f Flake) Sequence() int64 {
+// Step returns an int64 of the snowflake step (or sequence) number
+func (f ID) Step() int64 {
 	return int64(f) & 0x0000000000000FFF
+}
+
+// MarshalJSON returns a json byte array string of the snowflake ID.
+func (f ID) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + f.String() + `"`), nil
+}
+
+// UnmarshalJSON converts a json byte array of a snowflake ID into an ID type.
+func (f *ID) UnmarshalJSON(b []byte) error {
+
+	s := strings.Replace(string(b), `"`, ``, 2)
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	*f = ID(i)
+
+	return nil
 }
