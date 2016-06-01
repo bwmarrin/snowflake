@@ -21,7 +21,8 @@ go get github.com/bwmarrin/flake
 
 Import the package into your project then construct a new flake Node using a
 unique node number from 0 to 1023.  With the node object call the Generate()
-method to generate and return a unique snowflake ID.
+method to generate and return a unique snowflake ID. Also MarshalJSON and
+UnmarshalJSON methods are provided to easily use these ID's with a JSON API.
 
 **Example Program:**
 
