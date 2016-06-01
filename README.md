@@ -17,20 +17,13 @@ This assumes you already have a working Go environment, if not please see
 go get github.com/bwmarrin/flake
 ```
 
-### Usage Example
+### Usage
 
-Import the package into your project.
+Import the package into your project then construct a new flake Node using a
+unique node number from 0 to 1023.  With the node object call the Generate()
+method to generate and return a unique snowflake ID.
 
-```go
-import "github.com/bwmarrin/flake"
-```
-
-Construct a new flake Node that can be used to generate snowflake IDs then call
-the Generate method to get a unique ID. The only argument to the NewNode() 
-method is a Node number.  Each node you create must have it's own unique
-Node number. A node number can be any number from 0 to 1023.
-
-** Example Program: **
+**Example Program:**
 
 ```go
 package main
