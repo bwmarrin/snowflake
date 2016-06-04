@@ -24,7 +24,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		id2.UnmarshalJSON(id.Bytes())
+		_ = id2.UnmarshalJSON(id.Bytes())
 	}
 }
 

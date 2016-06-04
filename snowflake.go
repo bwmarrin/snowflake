@@ -123,6 +123,7 @@ func (f ID) Step() int64 {
 	return int64(f) & 0x0000000000000FFF
 }
 
+// MarshalJSON returns a json byte array string of the snowflake ID.
 func (f ID) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + f.String() + `"`), nil
 }
