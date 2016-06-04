@@ -3,24 +3,17 @@ package snowflake
 
 import (
 	"encoding/base64"
-	"fmt"
+	"errors"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
 const (
-	timeBits = 41
-	nodeBits = 10
-	stepBits = 12
-
-	timeMask int64 = -1 ^ (-1 << timeBits)
-	nodeMask int64 = -1 ^ (-1 << nodeBits)
-	stepMask int64 = -1 ^ (-1 << stepBits)
-
-	nodeMax = -1 ^ (-1 << nodeBits)
-
+	nodeBits        = 10
+	stepBits        = 12
+	nodeMax         = -1 ^ (-1 << nodeBits)
+	stepMask  int64 = -1 ^ (-1 << stepBits)
 	timeShift uint8 = nodeBits + stepBits
 	nodeShift uint8 = stepBits
 )
@@ -47,7 +40,7 @@ type ID int64
 func NewNode(node int64) (*Node, error) {
 
 	if node < 0 || node > nodeMax {
-		return nil, fmt.Errorf("Node number must be between 0 and 1023")
+		return nil, errors.New("Node number must be between 0 and 1024")
 	}
 
 	return &Node{
@@ -92,7 +85,7 @@ func (f ID) Int64() int64 {
 
 // String returns a string of the snowflake ID
 func (f ID) String() string {
-	return fmt.Sprintf("%d", f)
+	return strconv.FormatInt(int64(f), 10)
 }
 
 // Base2 returns a string base2 of the snowflake ID
@@ -130,7 +123,6 @@ func (f ID) Step() int64 {
 	return int64(f) & 0x0000000000000FFF
 }
 
-// MarshalJSON returns a json byte array string of the snowflake ID.
 func (f ID) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + f.String() + `"`), nil
 }
@@ -138,13 +130,11 @@ func (f ID) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON converts a json byte array of a snowflake ID into an ID type.
 func (f *ID) UnmarshalJSON(b []byte) error {
 
-	s := strings.Replace(string(b), `"`, ``, 2)
-	i, err := strconv.ParseInt(s, 10, 64)
+	i, err := strconv.ParseInt(string(b[1:len(b)-1]), 10, 64)
 	if err != nil {
 		return err
 	}
 
 	*f = ID(i)
-
 	return nil
 }
