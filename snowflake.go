@@ -26,10 +26,9 @@ var Epoch int64 = 1288834974657
 // node
 type Node struct {
 	sync.Mutex
-	time     int64
-	node     int64
-	step     int64
-	timebits int64
+	time int64
+	node int64
+	step int64
 }
 
 // An ID is a custom type used for a snowflake ID.  This is used so we can
