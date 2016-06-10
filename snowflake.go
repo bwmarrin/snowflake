@@ -117,7 +117,7 @@ func (f ID) Time() int64 {
 
 // Node returns an int64 of the snowflake ID node number
 func (f ID) Node() int64 {
-	return int64(f) & 0x00000000003FF000 >> 12
+	return int64(f) & 0x00000000003FF000 >> nodeShift
 }
 
 // Step returns an int64 of the snowflake step (or sequence) number
