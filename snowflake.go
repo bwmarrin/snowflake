@@ -26,9 +26,10 @@ var Epoch int64 = 1288834974657
 // node
 type Node struct {
 	sync.Mutex
-	time int64
-	node int64
-	step int64
+	time     int64
+	node     int64
+	step     int64
+	timebits int64
 }
 
 // An ID is a custom type used for a snowflake ID.  This is used so we can
@@ -51,7 +52,7 @@ func NewNode(node int64) (*Node, error) {
 }
 
 // Generate creates and returns a unique snowflake ID
-func (n *Node) Generate() (ID, error) {
+func (n *Node) Generate() ID {
 
 	n.Lock()
 	defer n.Unlock()
@@ -75,7 +76,7 @@ func (n *Node) Generate() (ID, error) {
 	return ID((now-Epoch)<<timeShift |
 		(n.node << nodeShift) |
 		(n.step),
-	), nil
+	)
 }
 
 // Int64 returns an int64 of the snowflake ID
@@ -125,12 +126,14 @@ func (f ID) Step() int64 {
 
 // MarshalJSON returns a json byte array string of the snowflake ID.
 func (f ID) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + f.String() + `"`), nil
+	buff := []byte("\"")
+	buff = strconv.AppendInt(buff, int64(f), 10)
+	buff = append(buff, '"')
+	return buff, nil
 }
 
 // UnmarshalJSON converts a json byte array of a snowflake ID into an ID type.
 func (f *ID) UnmarshalJSON(b []byte) error {
-
 	i, err := strconv.ParseInt(string(b[1:len(b)-1]), 10, 64)
 	if err != nil {
 		return err
