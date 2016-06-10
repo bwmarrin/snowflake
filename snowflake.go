@@ -40,7 +40,7 @@ type ID int64
 func NewNode(node int64) (*Node, error) {
 
 	if node < 0 || node > nodeMax {
-		return nil, errors.New("Node number must be between 0 and 1024")
+		return nil, errors.New("Node number must be between 0 and 1023")
 	}
 
 	return &Node{
