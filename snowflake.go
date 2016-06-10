@@ -54,7 +54,6 @@ func NewNode(node int64) (*Node, error) {
 func (n *Node) Generate() ID {
 
 	n.Lock()
-	defer n.Unlock()
 
 	now := time.Now().UnixNano() / 1000000
 
@@ -72,10 +71,13 @@ func (n *Node) Generate() ID {
 
 	n.time = now
 
-	return ID((now-Epoch)<<timeShift |
+	r := ID((now-Epoch)<<timeShift |
 		(n.node << nodeShift) |
 		(n.step),
 	)
+
+	n.Unlock()
+	return r
 }
 
 // Int64 returns an int64 of the snowflake ID
