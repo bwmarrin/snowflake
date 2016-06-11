@@ -127,7 +127,8 @@ func (f ID) Step() int64 {
 
 // MarshalJSON returns a json byte array string of the snowflake ID.
 func (f ID) MarshalJSON() ([]byte, error) {
-	buff := []byte("\"")
+	buff := make([]byte, 0, 2)
+	buff = append(buff, '"')
 	buff = strconv.AppendInt(buff, int64(f), 10)
 	buff = append(buff, '"')
 	return buff, nil
