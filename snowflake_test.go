@@ -44,26 +44,26 @@ func BenchmarkGenerate(b *testing.B) {
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
-
+	// Generate the ID to unmarshal
 	node, _ := NewNode(1)
 	id := node.Generate()
+	bytes, _ := id.MarshalJSON()
+
 	var id2 ID
 
 	b.ReportAllocs()
-
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = id2.UnmarshalJSON(id.Bytes())
+		_ = id2.UnmarshalJSON(bytes)
 	}
 }
 
 func BenchmarkMarshal(b *testing.B) {
-
+	// Generate the ID to marshal
 	node, _ := NewNode(1)
 	id := node.Generate()
 
 	b.ReportAllocs()
-
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_, _ = id.MarshalJSON()
