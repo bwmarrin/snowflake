@@ -2,8 +2,11 @@
 package snowflake
 
 import (
+	"crypto/md5"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -48,6 +51,20 @@ func NewNode(node int64) (*Node, error) {
 		node: node,
 		step: 0,
 	}, nil
+}
+
+// NewNodeByHostname is a convenience method which creates a new Node based
+// off a hash of the machine's hostname.
+func NewNodeByHostname() (*Node, error) {
+	name, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
+	hash := md5.Sum([]byte(name))
+	id := binary.BigEndian.Uint64(hash[:]) & 0x3FF // mask to first 10 bits, max of 1023
+
+	return NewNode(int64(id))
 }
 
 // Generate creates and returns a unique snowflake ID
