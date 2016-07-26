@@ -1,6 +1,9 @@
 package snowflake
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestMarshalJSON(t *testing.T) {
 	id := ID(13587)
@@ -13,6 +16,14 @@ func TestMarshalJSON(t *testing.T) {
 
 	if string(bytes) != expected {
 		t.Errorf("Got %s, expected %s", string(bytes), expected)
+	}
+}
+
+func TestMarshalsIntBytes(t *testing.T) {
+	id := ID(13587).IntBytes()
+	expected := []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x35, 0x13}
+	if !bytes.Equal(id[:], expected) {
+		t.Errorf("Expected ID to be encoded as %v, got %v", expected, id)
 	}
 }
 
