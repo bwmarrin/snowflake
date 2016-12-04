@@ -3,6 +3,7 @@ package snowflake
 
 import (
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"strconv"
 	"sync"
@@ -105,9 +106,17 @@ func (f ID) Base64() string {
 	return base64.StdEncoding.EncodeToString(f.Bytes())
 }
 
-// Bytes returns a byte array of the snowflake ID
+// Bytes returns a byte slice of the snowflake ID
 func (f ID) Bytes() []byte {
 	return []byte(f.String())
+}
+
+// IntBytes returns an array of bytes of the snowflake ID, encoded as a
+// big endian integer.
+func (f ID) IntBytes() [8]byte {
+	var b [8]byte
+	binary.BigEndian.PutUint64(b[:], uint64(f))
+	return b
 }
 
 // Time returns an int64 unix timestamp of the snowflake ID time
