@@ -54,11 +54,7 @@ func main() {
 	}
 
 	// Generate a snowflake ID.
-	id, err := node.Generate()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	id := node.Generate()
 
 	// Print out the ID in a few different ways.
 	fmt.Printf("Int64  ID: %d\n", id)
@@ -74,6 +70,9 @@ func main() {
 
 	// Print out the ID's sequence number
 	fmt.Printf("ID Step  : %d\n", id.Step())
+
+  // Generate and print, all in one.
+  fmt.Printf("ID       : %d\n", node.Generate().Int64())
 }
 ```
 
