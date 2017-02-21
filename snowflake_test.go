@@ -42,6 +42,48 @@ func TestUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestBase58(t *testing.T) {
+
+	node, _ := NewNode(1)
+
+	for i := 0; i < 10; i++ {
+
+		sf := node.Generate()
+		b58 := sf.Base58()
+		psf, err := ParseBase58([]byte(b58))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sf != psf {
+			t.Fatal("Parsed does not match String.")
+		}
+	}
+}
+func BenchmarkParseBase58(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+	b58 := sf.Base58()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		ParseBase58([]byte(b58))
+	}
+}
+func BenchmarkBase58(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		sf.Base58()
+	}
+}
 func BenchmarkGenerate(b *testing.B) {
 
 	node, _ := NewNode(1)
