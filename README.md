@@ -11,6 +11,11 @@ snowflake is a [Go](https://golang.org/) package that provides
 **For help with this package or general Go discussion, please join the [Discord 
 Gophers](https://discord.gg/0f1SbxBZjYq9jLBk) chat server.**
 
+## Status @ 2017-02-21
+This package should be considered stable and completed.  Any additions in the 
+future will strongly avoid API changes to existing functions.  Please see issues
+for any remaining TODO items that are planned.
+  
 ## Getting Started
 
 ### Installing
