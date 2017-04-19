@@ -5,6 +5,18 @@ import (
 	"testing"
 )
 
+func TestGeneratesWithHostname(t *testing.T) {
+	// quick sanity test, nothing too crazy...
+	node, err := NewNodeByHostname()
+	if err != nil {
+		t.Error("Unexpected error creating node by hostname")
+	}
+
+	if node.node == 0 {
+		t.Error("Expected non-zero ID to be assigned by NewNodeByHostname")
+	}
+}
+
 func TestMarshalJSON(t *testing.T) {
 	id := ID(13587)
 	expected := "\"13587\""
