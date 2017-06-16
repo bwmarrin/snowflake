@@ -2,6 +2,7 @@ package snowflake
 
 import (
 	"bytes"
+	"reflect"
 	"testing"
 )
 
@@ -28,17 +29,26 @@ func TestMarshalsIntBytes(t *testing.T) {
 }
 
 func TestUnmarshalJSON(t *testing.T) {
-	strID := "\"13587\""
-	expected := ID(13587)
-
-	var id ID
-	err := id.UnmarshalJSON([]byte(strID))
-	if err != nil {
-		t.Error("Unexpected error during UnmarshalJSON")
+	tt := []struct {
+		json        string
+		expectedId  ID
+		expectedErr error
+	}{
+		{`"13587"`, 13587, nil},
+		{`1`, 0, JSONSyntaxError{[]byte(`1`)}},
+		{`"invalid`, 0, JSONSyntaxError{[]byte(`"invalid`)}},
 	}
 
-	if id != expected {
-		t.Errorf("Got %d, expected %d", id, expected)
+	for _, tc := range tt {
+		var id ID
+		err := id.UnmarshalJSON([]byte(tc.json))
+		if !reflect.DeepEqual(err, tc.expectedErr) {
+			t.Errorf("Expected to get error '%s' decoding JSON, but got '%s'", tc.expectedErr, err)
+		}
+
+		if id != tc.expectedId {
+			t.Errorf("Expected to get ID '%s' decoding JSON, but got '%s'", tc.expectedId, id)
+		}
 	}
 }
 
