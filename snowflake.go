@@ -12,9 +12,11 @@ import (
 )
 
 const (
+	spareBits       = 22
 	nodeBits        = 10
-	stepBits        = 12
+	stepBits        = spareBits - nodeBits
 	nodeMax         = -1 ^ (-1 << nodeBits)
+	nodeMask        = nodeMax << stepBits
 	stepMask  int64 = -1 ^ (-1 << stepBits)
 	timeShift uint8 = nodeBits + stepBits
 	nodeShift uint8 = stepBits
@@ -189,12 +191,12 @@ func (f ID) Time() int64 {
 
 // Node returns an int64 of the snowflake ID node number
 func (f ID) Node() int64 {
-	return int64(f) & 0x00000000003FF000 >> nodeShift
+	return int64(f) & nodeMask >> nodeShift
 }
 
 // Step returns an int64 of the snowflake step (or sequence) number
 func (f ID) Step() int64 {
-	return int64(f) & 0x0000000000000FFF
+	return int64(f) & stepMask
 }
 
 // MarshalJSON returns a json byte array string of the snowflake ID.
