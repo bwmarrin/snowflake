@@ -16,17 +16,6 @@ This package should be considered stable and completed.  Any additions in the
 future will strongly avoid API changes to existing functions.  Please see issues
 for any remaining TODO items that are planned.
   
-## Getting Started
-
-### Installing
-
-This assumes you already have a working Go environment, if not please see
-[this page](https://golang.org/doc/install) first.
-
-```sh
-go get github.com/bwmarrin/snowflake
-```
-
 ### ID Format
 By default, the ID format follows the original Twitter snowflake format.
 * The ID as a whole is a 63 bit integer stored in an int64
@@ -44,6 +33,17 @@ Each time you generate an ID, it works, like this.
 * Then the Sequence Number is added, starting at 0 and incrementing for each ID generated in the same millisecond. If you generate enough IDs in the same millisecond that the sequence would roll over or overfill then the generate function will pause until the next millisecond.
 
 Using the default settings, this allows for 4096 unique IDs to be generated every millisecond, per Node ID.
+## Getting Started
+
+### Installing
+
+This assumes you already have a working Go environment, if not please see
+[this page](https://golang.org/doc/install) first.
+
+```sh
+go get github.com/bwmarrin/snowflake
+```
+
 
 ### Usage
 
