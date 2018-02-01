@@ -27,6 +27,24 @@ This assumes you already have a working Go environment, if not please see
 go get github.com/bwmarrin/snowflake
 ```
 
+### ID Format
+By default, the ID format follows the original Twitter snowflake format.
+* The ID as a whole is a 63 bit integer stored in an int64
+* 41 bits are used to store a timestamp with millisecond precision, using a custom epoch.
+* 10 bits are used to store a node id - a range from 0 through 1023.
+* 12 bits are used to store a sequence number - a range from 0 through 4095.
+
+### Custom Format
+Coming soon.. ish.  I plan to find the best way to modify the existing package to allow altering the number of bits used for Node ID's and Sequence Numbers. The goal is to implement this without breaking the API (1/31/18)
+
+### How it Works.
+Each time you generate an ID, it works, like this.
+* A timestamp with millisecond precision is stored in the first 41 bits of the ID.
+* Then the NodeID is added in subsequent bits.
+* Then the Sequence Number is added, starting at 0 and incrementing for each ID generated in the same millisecond. If you generate enough IDs in the same millisecond that the sequence would roll over or overfill then the generate function will pause until the next millisecond.
+
+Using the default settings, this allows for 4096 unique IDs to be generated every millisecond, per Node ID.
+
 ### Usage
 
 Import the package into your project then construct a new snowflake Node using a
