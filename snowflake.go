@@ -53,7 +53,7 @@ var Epoch int64 = 1288834974657
 // A Node struct holds the basic information needed for a snowflake generator
 // node
 type Node struct {
-	sync.Mutex
+	mu   sync.Mutex
 	time int64
 	node int64
 	step int64
@@ -81,7 +81,7 @@ func NewNode(node int64) (*Node, error) {
 // Generate creates and returns a unique snowflake ID
 func (n *Node) Generate() ID {
 
-	n.Lock()
+	n.mu.Lock()
 
 	now := time.Now().UnixNano() / 1000000
 
@@ -104,7 +104,7 @@ func (n *Node) Generate() ID {
 		(n.step),
 	)
 
-	n.Unlock()
+	n.mu.Unlock()
 	return r
 }
 
