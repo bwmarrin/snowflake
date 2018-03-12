@@ -52,6 +52,49 @@ func TestUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestBase32(t *testing.T) {
+
+	node, _ := NewNode(1)
+
+	for i := 0; i < 100; i++ {
+
+		sf := node.Generate()
+		b32i := sf.Base32()
+		psf, err := ParseBase32([]byte(b32i))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sf != psf {
+			t.Fatal("Parsed does not match String.")
+		}
+	}
+}
+
+func BenchmarkParseBase32(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+	b32i := sf.Base32()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		ParseBase32([]byte(b32i))
+	}
+}
+func BenchmarkBase32(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		sf.Base32()
+	}
+}
 func TestBase58(t *testing.T) {
 
 	node, _ := NewNode(1)

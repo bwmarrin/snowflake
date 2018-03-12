@@ -20,6 +20,10 @@ const (
 	nodeShift uint8 = stepBits
 )
 
+const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
+
+var decodeBase32Map [256]byte
+
 const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
 
 var decodeBase58Map [256]byte
@@ -41,10 +45,21 @@ func init() {
 	for i := 0; i < len(encodeBase58Map); i++ {
 		decodeBase58Map[encodeBase58Map[i]] = byte(i)
 	}
+
+	for i := 0; i < len(encodeBase32Map); i++ {
+		decodeBase32Map[i] = 0xFF
+	}
+
+	for i := 0; i < len(encodeBase32Map); i++ {
+		decodeBase32Map[encodeBase32Map[i]] = byte(i)
+	}
 }
 
 // ErrInvalidBase58 is returned by ParseBase58 when given an invalid []byte
 var ErrInvalidBase58 = errors.New("invalid base58")
+
+// ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
+var ErrInvalidBase32 = errors.New("invalid base32")
 
 // Epoch is set to the twitter snowflake epoch of 2006-03-21:20:50:14 GMT
 // You may customize this to set a different epoch for your application.
@@ -126,6 +141,47 @@ func (f ID) Base2() string {
 // Base36 returns a base36 string of the snowflake ID
 func (f ID) Base36() string {
 	return strconv.FormatInt(int64(f), 36)
+}
+
+// Base32 uses the z-base-32 character set but encodes and decodes similar
+// to base58, allowing it to create an even smaller result string.
+// NOTE: There are many different base32 implementations so becareful when
+// doing any interoperation interop with other packages.
+func (f ID) Base32() string {
+
+	if f < 32 {
+		return string(encodeBase32Map[f])
+	}
+
+	b := make([]byte, 0, 12)
+	for f >= 32 {
+		b = append(b, encodeBase32Map[f%32])
+		f /= 32
+	}
+	b = append(b, encodeBase32Map[f])
+
+	for x, y := 0, len(b)-1; x < y; x, y = x+1, y-1 {
+		b[x], b[y] = b[y], b[x]
+	}
+
+	return string(b)
+}
+
+// ParseBase32 parses a base32 []byte into a snowflake ID
+// NOTE: There are many different base32 implementations so becareful when
+// doing any interoperation interop with other packages.
+func ParseBase32(b []byte) (ID, error) {
+
+	var id int64
+
+	for i := range b {
+		if decodeBase32Map[b[i]] == 0xFF {
+			return -1, ErrInvalidBase32
+		}
+		id = id*32 + int64(decodeBase32Map[b[i]])
+	}
+
+	return ID(id), nil
 }
 
 // Base58 returns a base58 string of the snowflake ID
