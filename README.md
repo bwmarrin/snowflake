@@ -32,6 +32,11 @@ Each time you generate an ID, it works, like this.
 * Then the NodeID is added in subsequent bits.
 * Then the Sequence Number is added, starting at 0 and incrementing for each ID generated in the same millisecond. If you generate enough IDs in the same millisecond that the sequence would roll over or overfill then the generate function will pause until the next millisecond.
 
++--------------------------------------------------------------------------+
+| 1 Bit Unused | 41 Bit Timestamp |  10 Bit NodeID  |   12 Bit Sequence ID |
++--------------------------------------------------------------------------+
+
+
 Using the default settings, this allows for 4096 unique IDs to be generated every millisecond, per Node ID.
 ## Getting Started
 
