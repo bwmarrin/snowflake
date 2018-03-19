@@ -11,15 +11,24 @@ import (
 	"time"
 )
 
-const (
-	spareBits       = 22
-	nodeBits        = 10
-	stepBits        = spareBits - nodeBits
-	nodeMax         = -1 ^ (-1 << nodeBits)
-	nodeMask        = nodeMax << stepBits
-	stepMask  int64 = -1 ^ (-1 << stepBits)
-	timeShift uint8 = nodeBits + stepBits
-	nodeShift uint8 = stepBits
+var (
+	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC
+	// You may customize this to set a different epoch for your application.
+	Epoch int64 = 1288834974657
+
+	// Number of bits to use for Node
+	// Remember, you have a total 22 bits to share between Node/Step
+	NodeBits uint8 = 10
+
+	// Number of bits to use for Step
+	// Remember, you have a total 22 bits to share between Node/Step
+	StepBits uint8 = 12
+
+	nodeMax   int64 = -1 ^ (-1 << NodeBits)
+	nodeMask  int64 = nodeMax << StepBits
+	stepMask  int64 = -1 ^ (-1 << StepBits)
+	timeShift uint8 = NodeBits + StepBits
+	nodeShift uint8 = StepBits
 )
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
@@ -63,10 +72,6 @@ var ErrInvalidBase58 = errors.New("invalid base58")
 // ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
 var ErrInvalidBase32 = errors.New("invalid base32")
 
-// Epoch is set to the twitter snowflake epoch of 2006-03-21:20:50:14 GMT
-// You may customize this to set a different epoch for your application.
-var Epoch int64 = 1288834974657
-
 // A Node struct holds the basic information needed for a snowflake generator
 // node
 type Node struct {
@@ -87,6 +92,13 @@ func NewNode(node int64) (*Node, error) {
 	if node < 0 || node > nodeMax {
 		return nil, errors.New("Node number must be between 0 and 1023")
 	}
+
+	// re-calc in case custom NodeBits or StepBits were set
+	nodeMax = -1 ^ (-1 << NodeBits)
+	nodeMask = nodeMax << StepBits
+	stepMask = -1 ^ (-1 << StepBits)
+	timeShift = NodeBits + StepBits
+	nodeShift = StepBits
 
 	return &Node{
 		time: 0,
@@ -242,7 +254,7 @@ func (f ID) IntBytes() [8]byte {
 
 // Time returns an int64 unix timestamp of the snowflake ID time
 func (f ID) Time() int64 {
-	return (int64(f) >> 22) + Epoch
+	return (int64(f) >> timeShift) + Epoch
 }
 
 // Node returns an int64 of the snowflake ID node number
