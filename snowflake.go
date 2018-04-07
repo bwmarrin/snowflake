@@ -97,7 +97,7 @@ func NewNode(node int64) (*Node, error) {
 	nodeShift = StepBits
 	
 	if node < 0 || node > nodeMax {
-		return nil, errors.New("Node number must be between 0 and " + strconv.Itoa(nodeMax))
+		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
 	}
 
 	return &Node{
