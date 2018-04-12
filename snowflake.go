@@ -89,16 +89,16 @@ type ID int64
 // IDs
 func NewNode(node int64) (*Node, error) {
 
-	if node < 0 || node > nodeMax {
-		return nil, errors.New("Node number must be between 0 and 1023")
-	}
-
 	// re-calc in case custom NodeBits or StepBits were set
 	nodeMax = -1 ^ (-1 << NodeBits)
 	nodeMask = nodeMax << StepBits
 	stepMask = -1 ^ (-1 << StepBits)
 	timeShift = NodeBits + StepBits
 	nodeShift = StepBits
+	
+	if node < 0 || node > nodeMax {
+		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
+	}
 
 	return &Node{
 		time: 0,
