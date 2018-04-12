@@ -144,7 +144,7 @@ func (n *Node) GenerateID() (ID, error) {
 	return n.doGenerateID()
 }
 
-func (n *Node) doGenerateID() (ID, error) {
+func (n *Node) doGenerateID() (r ID, err error) {
 	n.mu.Lock()
 
 	now := time.Now().UnixNano() / 1000000
@@ -157,21 +157,23 @@ func (n *Node) doGenerateID() (ID, error) {
 				now = time.Now().UnixNano() / 1000000
 			}
 		}
-	} else if now < n.last{
-		return 0, NewBackwardsTimeError(n.last - now)
 	} else {
 		n.step = 0
 	}
 
-	n.last = now
-
-	r := ID((now-Epoch)<<timeShift |
+	r = ID((now-Epoch)<<timeShift |
 		(n.node << nodeShift) |
 		(n.step),
 	)
 
+	if now < n.last {
+		err = NewBackwardsTimeError(n.last - now)
+	}
+
+	n.last = now
+
 	n.mu.Unlock()
-	return r, nil
+	return r, err
 }
 
 // Int64 returns an int64 of the snowflake ID
