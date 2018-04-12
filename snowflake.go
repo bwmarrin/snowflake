@@ -76,7 +76,7 @@ var ErrInvalidBase32 = errors.New("invalid base32")
 // node
 type Node struct {
 	mu   sync.Mutex
-	time int64
+	last int64
 	node int64
 	step int64
 }
@@ -84,6 +84,30 @@ type Node struct {
 // An ID is a custom type used for a snowflake ID.  This is used so we can
 // attach methods onto the ID.
 type ID int64
+
+type BackwardsTimeError interface {
+	// Satisfy the generic error interface
+	error
+
+	// Returns the number of milliseconds of backwards time observed
+	Offset() int64
+}
+
+func NewBackwardsTimeError(offset int64) BackwardsTimeError {
+	return &backwardsTimeError{offset}
+}
+
+type backwardsTimeError struct {
+	offset int64
+}
+
+func (e backwardsTimeError) Error() string {
+	return fmt.Sprintf("Backwards time detected, try again in %d ms", e.offset)
+}
+
+func (e backwardsTimeError) Offset() int64 {
+	return e.offset
+}
 
 // NewNode returns a new snowflake node that can be used to generate snowflake
 // IDs
@@ -101,32 +125,45 @@ func NewNode(node int64) (*Node, error) {
 	nodeShift = StepBits
 
 	return &Node{
-		time: 0,
+		last: 0,
 		node: node,
 		step: 0,
 	}, nil
 }
 
 // Generate creates and returns a unique snowflake ID
+// use GenerateID to generate snowflakes with error checking
 func (n *Node) Generate() ID {
+	id, _ := n.doGenerateID()
+	return id
+}
 
+// GenerateID attempts to create and return a unique snowflake ID
+// If backwards clock drift is observed, a BackwardsTimeError will be returned
+func (n *Node) GenerateID() (ID, error) {
+	return n.doGenerateID()
+}
+
+func (n *Node) doGenerateID() (ID, error) {
 	n.mu.Lock()
 
 	now := time.Now().UnixNano() / 1000000
 
-	if n.time == now {
+	if n.last == now {
 		n.step = (n.step + 1) & stepMask
 
 		if n.step == 0 {
-			for now <= n.time {
+			for now <= n.last {
 				now = time.Now().UnixNano() / 1000000
 			}
 		}
+	} else if now < n.last{
+		return 0, NewBackwardsTimeError(n.last - now)
 	} else {
 		n.step = 0
 	}
 
-	n.time = now
+	n.last = now
 
 	r := ID((now-Epoch)<<timeShift |
 		(n.node << nodeShift) |
@@ -134,7 +171,7 @@ func (n *Node) Generate() ID {
 	)
 
 	n.mu.Unlock()
-	return r
+	return r, nil
 }
 
 // Int64 returns an int64 of the snowflake ID
