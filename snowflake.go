@@ -100,11 +100,7 @@ func NewNode(node int64) (*Node, error) {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
 	}
 
-	return &Node{
-		// time: 0,
-		node: node,
-		step: 0,
-	}, nil
+	return &Node{node: node}, nil
 }
 
 // Generate creates and returns a unique snowflake ID
