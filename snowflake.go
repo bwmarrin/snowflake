@@ -14,7 +14,7 @@ import (
 var (
 	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC
 	// You may customize this to set a different epoch for your application.
-	Epoch int64 = 1288834974657
+	Epoch = time.Date(2010, time.November, 4, 1, 42, 54, 0, time.UTC)
 
 	// Number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
@@ -76,7 +76,7 @@ var ErrInvalidBase32 = errors.New("invalid base32")
 // node
 type Node struct {
 	mu   sync.Mutex
-	time int64
+	time time.Time
 	node int64
 	step int64
 }
@@ -95,13 +95,13 @@ func NewNode(node int64) (*Node, error) {
 	stepMask = -1 ^ (-1 << StepBits)
 	timeShift = NodeBits + StepBits
 	nodeShift = StepBits
-	
+
 	if node < 0 || node > nodeMax {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
 	}
 
 	return &Node{
-		time: 0,
+		// time: 0,
 		node: node,
 		step: 0,
 	}, nil
@@ -112,14 +112,14 @@ func (n *Node) Generate() ID {
 
 	n.mu.Lock()
 
-	now := time.Now().UnixNano() / 1000000
+	now := time.Now()
 
-	if n.time == now {
+	if now.Sub(n.time) < time.Millisecond {
 		n.step = (n.step + 1) & stepMask
 
 		if n.step == 0 {
-			for now <= n.time {
-				now = time.Now().UnixNano() / 1000000
+			for now.Sub(n.time) < time.Millisecond {
+				now = time.Now()
 			}
 		}
 	} else {
@@ -128,7 +128,7 @@ func (n *Node) Generate() ID {
 
 	n.time = now
 
-	r := ID((now-Epoch)<<timeShift |
+	r := ID((now.Sub(Epoch).Nanoseconds()/1000000)<<timeShift |
 		(n.node << nodeShift) |
 		(n.step),
 	)
@@ -252,9 +252,9 @@ func (f ID) IntBytes() [8]byte {
 	return b
 }
 
-// Time returns an int64 unix timestamp of the snowflake ID time
+// Time returns an int64 unix timestamp in miliseconds of the snowflake ID time
 func (f ID) Time() int64 {
-	return (int64(f) >> timeShift) + Epoch
+	return (int64(f) >> timeShift) + (Epoch.UnixNano() / 1000000)
 }
 
 // Node returns an int64 of the snowflake ID node number
