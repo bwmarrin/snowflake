@@ -24,6 +24,8 @@ var (
 	// Remember, you have a total 22 bits to share between Node/Step
 	StepBits uint8 = 12
 
+	// DEPRECATED: the below four variables will be removed in a future release.
+	mu        sync.Mutex
 	nodeMax   int64 = -1 ^ (-1 << NodeBits)
 	nodeMask        = nodeMax << StepBits
 	stepMask  int64 = -1 ^ (-1 << StepBits)
@@ -79,6 +81,12 @@ type Node struct {
 	time int64
 	node int64
 	step int64
+
+	nodeMax   int64
+	nodeMask  int64
+	stepMask  int64
+	timeShift uint8
+	nodeShift uint8
 }
 
 // An ID is a custom type used for a snowflake ID.  This is used so we can
@@ -90,21 +98,28 @@ type ID int64
 func NewNode(node int64) (*Node, error) {
 
 	// re-calc in case custom NodeBits or StepBits were set
+	// DEPRECATED: the below block will be removed in a future release.
+	mu.Lock()
 	nodeMax = -1 ^ (-1 << NodeBits)
 	nodeMask = nodeMax << StepBits
 	stepMask = -1 ^ (-1 << StepBits)
 	timeShift = NodeBits + StepBits
 	nodeShift = StepBits
+	mu.Unlock()
 
-	if node < 0 || node > nodeMax {
-		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
+	n := Node{}
+	n.node = node
+	n.nodeMax = -1 ^ (-1 << NodeBits)
+	n.nodeMask = n.nodeMax << StepBits
+	n.stepMask = -1 ^ (-1 << StepBits)
+	n.timeShift = NodeBits + StepBits
+	n.nodeShift = StepBits
+
+	if n.node < 0 || n.node > n.nodeMax {
+		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
 	}
 
-	return &Node{
-		time: 0,
-		node: node,
-		step: 0,
-	}, nil
+	return &n, nil
 }
 
 // Generate creates and returns a unique snowflake ID
@@ -115,7 +130,7 @@ func (n *Node) Generate() ID {
 	now := time.Now().UnixNano() / 1000000
 
 	if n.time == now {
-		n.step = (n.step + 1) & stepMask
+		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
 			for now <= n.time {
@@ -128,8 +143,8 @@ func (n *Node) Generate() ID {
 
 	n.time = now
 
-	r := ID((now-Epoch)<<timeShift |
-		(n.node << nodeShift) |
+	r := ID((now-Epoch)<<n.timeShift |
+		(n.node << n.nodeShift) |
 		(n.step),
 	)
 
@@ -253,16 +268,19 @@ func (f ID) IntBytes() [8]byte {
 }
 
 // Time returns an int64 unix timestamp of the snowflake ID time
+// DEPRECATED: the below function will be removed in a future release.
 func (f ID) Time() int64 {
 	return (int64(f) >> timeShift) + Epoch
 }
 
 // Node returns an int64 of the snowflake ID node number
+// DEPRECATED: the below function will be removed in a future release.
 func (f ID) Node() int64 {
 	return int64(f) & nodeMask >> nodeShift
 }
 
 // Step returns an int64 of the snowflake step (or sequence) number
+// DEPRECATED: the below function will be removed in a future release.
 func (f ID) Step() int64 {
 	return int64(f) & stepMask
 }
