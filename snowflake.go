@@ -16,19 +16,19 @@ var (
 	// You may customize this to set a different epoch for your application.
 	Epoch int64 = 1288834974657
 
-	// Number of bits to use for Node
+	// NodeBits holds the number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
 	NodeBits uint8 = 10
 
-	// Number of bits to use for Step
+	// StepBits holds the number of bits to use for Step
 	// Remember, you have a total 22 bits to share between Node/Step
 	StepBits uint8 = 12
 
 	nodeMax   int64 = -1 ^ (-1 << NodeBits)
-	nodeMask  int64 = nodeMax << StepBits
+	nodeMask        = nodeMax << StepBits
 	stepMask  int64 = -1 ^ (-1 << StepBits)
-	timeShift uint8 = NodeBits + StepBits
-	nodeShift uint8 = StepBits
+	timeShift       = NodeBits + StepBits
+	nodeShift       = StepBits
 )
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
@@ -95,7 +95,7 @@ func NewNode(node int64) (*Node, error) {
 	stepMask = -1 ^ (-1 << StepBits)
 	timeShift = NodeBits + StepBits
 	nodeShift = StepBits
-	
+
 	if node < 0 || node > nodeMax {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
 	}
