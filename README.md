@@ -135,7 +135,7 @@ To benchmark the generator on your system run the following command inside the
 snowflake package directory.
 
 ```sh
-go test -bench=.
+go test -run=^$ -bench=.
 ```
 
 If your curious, check out this commit that shows benchmarks that compare a few 
