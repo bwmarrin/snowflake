@@ -4,6 +4,7 @@ go:
     - 1.12.x
 install:
     - go get -v .
+    - go get -v golang.org/x/lint/golint
 script:
     - diff <(gofmt -d .) <(echo -n)
     - go vet -x ./...
