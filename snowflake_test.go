@@ -169,6 +169,20 @@ func BenchmarkGenerate(b *testing.B) {
 	}
 }
 
+func BenchmarkGenerateMaxSequence(b *testing.B) {
+
+	NodeBits = 1
+	StepBits = 21
+	node, _ := NewNode(1)
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_ = node.Generate()
+	}
+}
+
 func BenchmarkUnmarshal(b *testing.B) {
 	// Generate the ID to unmarshal
 	node, _ := NewNode(1)
