@@ -6,6 +6,25 @@ import (
 	"testing"
 )
 
+// I feel like there's probably a better way
+func TestRace(t *testing.T) {
+
+	node, _ := NewNode(1)
+
+	go func() {
+		for i := 0; i < 1000000000; i++ {
+
+			NewNode(1)
+		}
+	}()
+
+	for i := 0; i < 4000; i++ {
+
+		node.Generate()
+	}
+
+}
+
 func TestMarshalJSON(t *testing.T) {
 	id := ID(13587)
 	expected := "\"13587\""
@@ -112,6 +131,7 @@ func TestBase58(t *testing.T) {
 		}
 	}
 }
+
 func BenchmarkParseBase58(b *testing.B) {
 
 	node, _ := NewNode(1)
