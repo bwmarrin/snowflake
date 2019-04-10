@@ -12,9 +12,11 @@ import (
 )
 
 var (
+	curTime = time.Now()
 	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC
 	// You may customize this to set a different epoch for your application.
-	Epoch = time.Date(2010, time.November, 4, 1, 42, 54, 0, time.UTC)
+	// Note: add time.Duration to time.Now() to make sure we use the monotonic clock if available.
+	Epoch = curTime.Add(time.Date(2010, time.November, 4, 1, 42, 54, 0, time.UTC).Sub(curTime))
 
 	// Number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
@@ -108,14 +110,14 @@ func (n *Node) Generate() ID {
 
 	n.mu.Lock()
 
-	now := time.Now().Sub(Epoch)
+	now := time.Since(Epoch)
 
 	if now-n.time < time.Millisecond {
 		n.step = (n.step + 1) & stepMask
 
 		if n.step == 0 {
 			for now-n.time < time.Millisecond {
-				now = time.Now().Sub(Epoch)
+				now = time.Since(Epoch)
 			}
 		}
 	} else {
