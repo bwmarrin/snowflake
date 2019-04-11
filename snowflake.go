@@ -79,7 +79,7 @@ var ErrInvalidBase32 = errors.New("invalid base32")
 type Node struct {
 	mu    sync.Mutex
 	epoch time.Time
-	time  time.Duration
+	time  int64
 	node  int64
 	step  int64
 
@@ -132,14 +132,14 @@ func (n *Node) Generate() ID {
 
 	n.mu.Lock()
 
-	now := time.Since(n.epoch)
+	now := time.Since(n.epoch).Nanoseconds() / 1000000
 
-	if now-n.time < time.Millisecond {
+	if now == n.time {
 		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
-			for now-n.time < time.Millisecond {
-				now = time.Since(n.epoch)
+			for now <= n.time {
+				now = time.Since(n.epoch).Nanoseconds() / 1000000
 			}
 		}
 	} else {
@@ -148,7 +148,7 @@ func (n *Node) Generate() ID {
 
 	n.time = now
 
-	r := ID((now.Nanoseconds()/1000000)<<n.timeShift |
+	r := ID((now)<<n.timeShift |
 		(n.node << n.nodeShift) |
 		(n.step),
 	)
