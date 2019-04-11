@@ -12,11 +12,9 @@ import (
 )
 
 var (
-	curTime = time.Now()
-	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC
+	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
 	// You may customize this to set a different epoch for your application.
-	// Note: add time.Duration to time.Now() to make sure we use the monotonic clock if available.
-	Epoch = curTime.Add(time.Date(2010, time.November, 4, 1, 42, 54, 0, time.UTC).Sub(curTime))
+	Epoch int64 = 1288834974657
 
 	// NodeBits holds the number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
@@ -79,10 +77,11 @@ var ErrInvalidBase32 = errors.New("invalid base32")
 // A Node struct holds the basic information needed for a snowflake generator
 // node
 type Node struct {
-	mu   sync.Mutex
-	time time.Duration
-	node int64
-	step int64
+	mu    sync.Mutex
+	epoch time.Time
+	time  time.Duration
+	node  int64
+	step  int64
 
 	nodeMax   int64
 	nodeMask  int64
@@ -121,6 +120,10 @@ func NewNode(node int64) (*Node, error) {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
 	}
 
+	var curTime = time.Now()
+	// add time.Duration to curTime to make sure we use the monotonic clock if available
+	n.epoch = curTime.Add(time.Unix(Epoch/1000, (Epoch%1000)*1000000).Sub(curTime))
+
 	return &n, nil
 }
 
@@ -129,14 +132,14 @@ func (n *Node) Generate() ID {
 
 	n.mu.Lock()
 
-	now := time.Since(Epoch)
+	now := time.Since(n.epoch)
 
 	if now-n.time < time.Millisecond {
 		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
 			for now-n.time < time.Millisecond {
-				now = time.Since(Epoch)
+				now = time.Since(n.epoch)
 			}
 		}
 	} else {
@@ -269,10 +272,10 @@ func (f ID) IntBytes() [8]byte {
 	return b
 }
 
-// Time returns an int64 unix timestamp in miliseconds of the snowflake ID time
+// Time returns an int64 unix timestamp in milliseconds of the snowflake ID time
 // DEPRECATED: the below function will be removed in a future release.
 func (f ID) Time() int64 {
-	return (int64(f) >> timeShift) + (Epoch.UnixNano() / 1000000)
+	return (int64(f) >> timeShift) + Epoch
 }
 
 // Node returns an int64 of the snowflake ID node number
