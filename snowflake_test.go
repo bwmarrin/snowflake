@@ -6,6 +6,21 @@ import (
 	"testing"
 )
 
+// check if Generate will create duplicate IDs
+func TestGenerateDuplicateID(t *testing.T) {
+
+	node, _ := NewNode(1)
+
+	var x, y ID
+	for i := 0; i < 100000000; i++ {
+		y = node.Generate()
+		if x == y {
+			t.Errorf("x(%d) & y(%d) are the same", x, y)
+		}
+		x = y
+	}
+}
+
 // I feel like there's probably a better way
 func TestRace(t *testing.T) {
 

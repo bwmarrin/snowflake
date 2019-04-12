@@ -48,7 +48,14 @@ func (j JSONSyntaxError) Error() string {
 	return fmt.Sprintf("invalid snowflake ID %q", string(j.original))
 }
 
-// Create a map for decoding Base58.  This speeds up the process tremendously.
+// ErrInvalidBase58 is returned by ParseBase58 when given an invalid []byte
+var ErrInvalidBase58 = errors.New("invalid base58")
+
+// ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
+var ErrInvalidBase32 = errors.New("invalid base32")
+
+// Create maps for decoding Base58/Base32.
+// This speeds up the process tremendously.
 func init() {
 
 	for i := 0; i < len(encodeBase58Map); i++ {
@@ -67,12 +74,6 @@ func init() {
 		decodeBase32Map[encodeBase32Map[i]] = byte(i)
 	}
 }
-
-// ErrInvalidBase58 is returned by ParseBase58 when given an invalid []byte
-var ErrInvalidBase58 = errors.New("invalid base58")
-
-// ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
-var ErrInvalidBase32 = errors.New("invalid base32")
 
 // A Node struct holds the basic information needed for a snowflake generator
 // node
@@ -128,6 +129,9 @@ func NewNode(node int64) (*Node, error) {
 }
 
 // Generate creates and returns a unique snowflake ID
+// To help guarantee uniqueness
+// - Make sure your system is keeping accurate system time
+// - Make sure you never have multiple nodes running with the same node ID
 func (n *Node) Generate() ID {
 
 	n.mu.Lock()
