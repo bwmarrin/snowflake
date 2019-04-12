@@ -9,6 +9,20 @@ import (
 //******************************************************************************
 // General Test funcs
 
+func TestNewNode(t *testing.T) {
+
+	_, err := NewNode(0)
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	_, err = NewNode(5000)
+	if err == nil {
+		t.Fatalf("no error creating NewNode, %s", err)
+	}
+
+}
+
 // lazy check if Generate will create duplicate IDs
 // would be good to later enhance this with more smarts
 func TestGenerateDuplicateID(t *testing.T) {
