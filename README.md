@@ -5,16 +5,16 @@ snowflake
 snowflake is a [Go](https://golang.org/) package that provides
 * A very simple Twitter snowflake generator.
 * Methods to parse existing snowflake IDs.
-* Methods to convert a snowflake ID into several other data types.
+* Methods to convert a snowflake ID into several other data types and back.
 * JSON Marshal/Unmarshal functions to easily use snowflake IDs within a JSON API.
+* Monotonic Clock calculations protect from clock drift.
 
 **For help with this package or general Go discussion, please join the [Discord 
 Gophers](https://discord.gg/0f1SbxBZjYq9jLBk) chat server.**
 
-## Status @ 2017-02-21
+## Status
 This package should be considered stable and completed.  Any additions in the 
-future will strongly avoid API changes to existing functions.  Please see issues
-for any remaining TODO items that are planned.
+future will strongly avoid API changes to existing functions. 
   
 ### ID Format
 By default, the ID format follows the original Twitter snowflake format.
