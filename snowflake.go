@@ -367,3 +367,8 @@ func (f *ID) UnmarshalJSON(b []byte) error {
 	*f = ID(i)
 	return nil
 }
+
+// IsZero returns a bool used to determine if it is 0.
+func (f ID) IsZero() bool {
+	return f == 0
+}
