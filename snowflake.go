@@ -11,27 +11,28 @@ import (
 	"time"
 )
 
-var (
-	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
-	// You may customize this to set a different epoch for your application.
-	Epoch int64 = 1288834974657
+// The default epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
+// You may use Config to customize this to set a different epoch for your application.
+const defaultEpoch = 1288834974657
+
+type Config struct {
+	// Epoch from which the time-part of the ID is offset
+	Epoch int64
 
 	// NodeBits holds the number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
-	NodeBits uint8 = 10
+	NodeBits uint8
 
 	// StepBits holds the number of bits to use for Step
 	// Remember, you have a total 22 bits to share between Node/Step
-	StepBits uint8 = 12
+	StepBits uint8
+}
 
-	// DEPRECATED: the below four variables will be removed in a future release.
-	mu        sync.Mutex
-	nodeMax   int64 = -1 ^ (-1 << NodeBits)
-	nodeMask        = nodeMax << StepBits
-	stepMask  int64 = -1 ^ (-1 << StepBits)
-	timeShift       = NodeBits + StepBits
-	nodeShift       = StepBits
-)
+var defaultConfig = Config{
+	Epoch:    defaultEpoch,
+	NodeBits: 10,
+	StepBits: 12,
+}
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
 
@@ -95,27 +96,15 @@ type Node struct {
 // attach methods onto the ID.
 type ID int64
 
-// NewNode returns a new snowflake node that can be used to generate snowflake
-// IDs
-func NewNode(node int64) (*Node, error) {
-
-	// re-calc in case custom NodeBits or StepBits were set
-	// DEPRECATED: the below block will be removed in a future release.
-	mu.Lock()
-	nodeMax = -1 ^ (-1 << NodeBits)
-	nodeMask = nodeMax << StepBits
-	stepMask = -1 ^ (-1 << StepBits)
-	timeShift = NodeBits + StepBits
-	nodeShift = StepBits
-	mu.Unlock()
-
+// NewNodeWithConfig creates a new snowflake node with the given config
+func NewNodeWithConfig(node int64, c Config) (*Node, error) {
 	n := Node{}
 	n.node = node
-	n.nodeMax = -1 ^ (-1 << NodeBits)
-	n.nodeMask = n.nodeMax << StepBits
-	n.stepMask = -1 ^ (-1 << StepBits)
-	n.timeShift = NodeBits + StepBits
-	n.nodeShift = StepBits
+	n.nodeMax = -1 ^ (-1 << c.NodeBits)
+	n.nodeMask = n.nodeMax << c.StepBits
+	n.stepMask = -1 ^ (-1 << c.StepBits)
+	n.timeShift = c.NodeBits + c.StepBits
+	n.nodeShift = c.StepBits
 
 	if n.node < 0 || n.node > n.nodeMax {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
@@ -123,9 +112,15 @@ func NewNode(node int64) (*Node, error) {
 
 	var curTime = time.Now()
 	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = curTime.Add(time.Unix(Epoch/1000, (Epoch%1000)*1000000).Sub(curTime))
+	n.epoch = curTime.Add(time.Unix(c.Epoch/1000, (c.Epoch%1000)*1000000).Sub(curTime))
 
 	return &n, nil
+}
+
+// NewNode returns a new snowflake node that can be used to generate snowflake
+// IDs
+func NewNode(node int64) (*Node, error) {
+	return NewNodeWithConfig(node, defaultConfig)
 }
 
 // Generate creates and returns a unique snowflake ID
@@ -320,24 +315,6 @@ func (f ID) IntBytes() [8]byte {
 // a snowflake ID
 func ParseIntBytes(id [8]byte) ID {
 	return ID(int64(binary.BigEndian.Uint64(id[:])))
-}
-
-// Time returns an int64 unix timestamp in milliseconds of the snowflake ID time
-// DEPRECATED: the below function will be removed in a future release.
-func (f ID) Time() int64 {
-	return (int64(f) >> timeShift) + Epoch
-}
-
-// Node returns an int64 of the snowflake ID node number
-// DEPRECATED: the below function will be removed in a future release.
-func (f ID) Node() int64 {
-	return int64(f) & nodeMask >> nodeShift
-}
-
-// Step returns an int64 of the snowflake step (or sequence) number
-// DEPRECATED: the below function will be removed in a future release.
-func (f ID) Step() int64 {
-	return int64(f) & stepMask
 }
 
 // MarshalJSON returns a json byte array string of the snowflake ID.
