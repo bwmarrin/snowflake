@@ -327,13 +327,13 @@ func TestMarshalJSON(t *testing.T) {
 	id := ID(13587)
 	expected := "\"13587\""
 
-	bytes, err := id.MarshalJSON()
+	json, err := id.MarshalJSON()
 	if err != nil {
 		t.Fatalf("Unexpected error during MarshalJSON")
 	}
 
-	if string(bytes) != expected {
-		t.Fatalf("Got %s, expected %s", string(bytes), expected)
+	if string(json) != expected {
+		t.Fatalf("Got %s, expected %s", string(json), expected)
 	}
 }
 
@@ -453,14 +453,14 @@ func BenchmarkUnmarshal(b *testing.B) {
 	// Generate the ID to unmarshal
 	node, _ := NewNode(1)
 	id := node.Generate()
-	bytes, _ := id.MarshalJSON()
+	json, _ := id.MarshalJSON()
 
 	var id2 ID
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = id2.UnmarshalJSON(bytes)
+		_ = id2.UnmarshalJSON(json)
 	}
 }
 
@@ -473,5 +473,39 @@ func BenchmarkMarshal(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		_, _ = id.MarshalJSON()
+	}
+}
+
+func TestParseBase32(t *testing.T) {
+	tests := []struct {
+		name    string
+		arg     string
+		want    ID
+		wantErr bool
+	}{
+		{
+			name:    "ok",
+			arg:     "b8wjm1zroyyyy",
+			want:    1427970479175499776,
+			wantErr: false,
+		},
+		{
+			name:    "ok",
+			arg:     "b8wjm1zroyyyyA",
+			want:    -1,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseBase32([]byte(tt.arg))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseBase32() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ParseBase32() got = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
