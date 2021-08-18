@@ -436,9 +436,10 @@ func BenchmarkGenerate(b *testing.B) {
 
 func BenchmarkGenerateMaxSequence(b *testing.B) {
 
-	NodeBits = 1
-	StepBits = 21
-	node, _ := NewNode(1)
+	node, _ := NewNodeWithConfig(1, Config{
+		NodeBits: 1,
+		StepBits: 21,
+	})
 
 	b.ReportAllocs()
 
