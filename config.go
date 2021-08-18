@@ -4,6 +4,7 @@ package snowflake
 // You may use Config to customize this to set a different epoch for your application.
 const defaultEpoch = 1288834974657
 
+// Config can be used to specify parameters for a Node.
 type Config struct {
 	// Epoch from which the time-part of the ID is offset
 	Epoch int64
