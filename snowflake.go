@@ -4,36 +4,8 @@ package snowflake
 import (
 	"encoding/base64"
 	"encoding/binary"
-	"errors"
-	"fmt"
 	"strconv"
-	"sync"
-	"time"
 )
-
-// The default epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
-// You may use Config to customize this to set a different epoch for your application.
-const defaultEpoch = 1288834974657
-
-// Config can be used to specify parameters for a Node.
-type Config struct {
-	// Epoch from which the time-part of the ID is offset
-	Epoch int64
-
-	// NodeBits holds the number of bits to use for Node
-	// Remember, you have a total 22 bits to share between Node/Step
-	NodeBits uint8
-
-	// StepBits holds the number of bits to use for Step
-	// Remember, you have a total 22 bits to share between Node/Step
-	StepBits uint8
-}
-
-var defaultConfig = Config{
-	Epoch:    defaultEpoch,
-	NodeBits: 10,
-	StepBits: 12,
-}
 
 const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
 
@@ -42,19 +14,6 @@ var decodeBase32Map [256]byte
 const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
 
 var decodeBase58Map [256]byte
-
-// A JSONSyntaxError is returned from UnmarshalJSON if an invalid ID is provided.
-type JSONSyntaxError struct{ original []byte }
-
-func (j JSONSyntaxError) Error() string {
-	return fmt.Sprintf("invalid snowflake ID %q", string(j.original))
-}
-
-// ErrInvalidBase58 is returned by ParseBase58 when given an invalid []byte
-var ErrInvalidBase58 = errors.New("invalid base58")
-
-// ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
-var ErrInvalidBase32 = errors.New("invalid base32")
 
 // Create maps for decoding Base58/Base32.
 // This speeds up the process tremendously.
@@ -77,85 +36,9 @@ func init() {
 	}
 }
 
-// A Node struct holds the basic information needed for a snowflake generator
-// node
-type Node struct {
-	mu    sync.Mutex
-	epoch time.Time
-	time  int64
-	node  int64
-	step  int64
-
-	nodeMax   int64
-	nodeMask  int64
-	stepMask  int64
-	timeShift uint8
-	nodeShift uint8
-}
-
 // An ID is a custom type used for a snowflake ID.  This is used so we can
 // attach methods onto the ID.
 type ID int64
-
-// NewNodeWithConfig creates a new snowflake node with the given config
-func NewNodeWithConfig(node int64, c Config) (*Node, error) {
-	n := Node{}
-	n.node = node
-	n.nodeMax = -1 ^ (-1 << c.NodeBits)
-	n.nodeMask = n.nodeMax << c.StepBits
-	n.stepMask = -1 ^ (-1 << c.StepBits)
-	n.timeShift = c.NodeBits + c.StepBits
-	n.nodeShift = c.StepBits
-
-	if n.node < 0 || n.node > n.nodeMax {
-		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
-	}
-
-	var curTime = time.Now()
-	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = curTime.Add(time.Unix(c.Epoch/1000, (c.Epoch%1000)*1000000).Sub(curTime))
-
-	return &n, nil
-}
-
-// NewNode returns a new snowflake node that can be used to generate snowflake
-// IDs
-func NewNode(node int64) (*Node, error) {
-	return NewNodeWithConfig(node, defaultConfig)
-}
-
-// Generate creates and returns a unique snowflake ID
-// To help guarantee uniqueness
-// - Make sure your system is keeping accurate system time
-// - Make sure you never have multiple nodes running with the same node ID
-func (n *Node) Generate() ID {
-
-	n.mu.Lock()
-
-	now := time.Since(n.epoch).Nanoseconds() / 1000000
-
-	if now == n.time {
-		n.step = (n.step + 1) & n.stepMask
-
-		if n.step == 0 {
-			for now <= n.time {
-				now = time.Since(n.epoch).Nanoseconds() / 1000000
-			}
-		}
-	} else {
-		n.step = 0
-	}
-
-	n.time = now
-
-	r := ID((now)<<n.timeShift |
-		(n.node << n.nodeShift) |
-		(n.step),
-	)
-
-	n.mu.Unlock()
-	return r
-}
 
 // Int64 returns an int64 of the snowflake ID
 func (f ID) Int64() int64 {
