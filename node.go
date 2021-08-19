@@ -16,7 +16,6 @@ type Node struct {
 	node  int64
 	step  int64
 
-	nodeMax   int64
 	nodeMask  int64
 	stepMask  int64
 	timeShift uint8
@@ -25,23 +24,37 @@ type Node struct {
 
 // NewNodeWithConfig creates a new snowflake node with the given config
 func NewNodeWithConfig(node int64, c Config) (*Node, error) {
-	n := Node{}
-	n.node = node
-	n.nodeMax = -1 ^ (-1 << c.NodeBits)
-	n.nodeMask = n.nodeMax << c.StepBits
-	n.stepMask = -1 ^ (-1 << c.StepBits)
-	n.timeShift = c.NodeBits + c.StepBits
-	n.nodeShift = c.StepBits
-
-	if n.node < 0 || n.node > n.nodeMax {
-		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
+	if c.NodeBits == 0 {
+		return nil, errors.New("invalid config; NodeBits cannot be 0")
 	}
 
-	var curTime = time.Now()
-	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = curTime.Add(time.Unix(c.Epoch/1000, (c.Epoch%1000)*1000000).Sub(curTime))
+	if c.StepBits == 0 {
+		return nil, errors.New("invalid config; StepBits cannot be 0")
+	}
 
-	return &n, nil
+	if c.NodeBits+c.StepBits > 22 {
+		return nil, errors.New("NodeBits + StepBits should be no more than 22")
+	}
+
+	nodeMax := int64(-1 ^ (-1 << c.NodeBits))
+	if node < 0 || node > nodeMax {
+		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(nodeMax, 10))
+	}
+
+	if c.Epoch == 0 {
+		c.Epoch = defaultEpoch
+	}
+
+	curTime := time.Now()
+	return &Node{
+		// add time.Duration to curTime to make sure we use the monotonic clock if available
+		epoch:     curTime.Add(time.Unix(c.Epoch/1000, (c.Epoch%1000)*1000000).Sub(curTime)),
+		node:      node,
+		nodeMask:  nodeMax << c.StepBits,
+		stepMask:  -1 ^ (-1 << c.StepBits),
+		timeShift: c.NodeBits + c.StepBits,
+		nodeShift: c.StepBits,
+	}, nil
 }
 
 // NewNode returns a new snowflake node that can be used to generate snowflake
