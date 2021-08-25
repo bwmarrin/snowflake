@@ -474,3 +474,107 @@ func BenchmarkMarshal(b *testing.B) {
 		_, _ = id.MarshalJSON()
 	}
 }
+
+func TestParseBase32(t *testing.T) {
+	tests := []struct {
+		name    string
+		arg     string
+		want    ID
+		wantErr bool
+	}{
+		{
+			name:    "ok",
+			arg:     "b8wjm1zroyyyy",
+			want:    1427970479175499776,
+			wantErr: false,
+		},
+		{
+			name:    "capital case is invalid encoding",
+			arg:     "B8WJM1ZROYYYY",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "l is not allowed",
+			arg:     "b8wjm1zroyyyl",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "v is not allowed",
+			arg:     "b8wjm1zroyyyv",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "2 is not allowed",
+			arg:     "b8wjm1zroyyy2",
+			want:    -1,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseBase32([]byte(tt.arg))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseBase32() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ParseBase32() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseBase58(t *testing.T) {
+	tests := []struct {
+		name    string
+		arg     string
+		want    ID
+		wantErr bool
+	}{
+		{
+			name:    "ok",
+			arg:     "4jgmnx8Js8A",
+			want:    1428076403798048768,
+			wantErr: false,
+		},
+		{
+			name:    "0 not allowed",
+			arg:     "0jgmnx8Js8A",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "I not allowed",
+			arg:     "Ijgmnx8Js8A",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "O not allowed",
+			arg:     "Ojgmnx8Js8A",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "l not allowed",
+			arg:     "ljgmnx8Js8A",
+			want:    -1,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseBase58([]byte(tt.arg))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseBase58() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ParseBase58() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
