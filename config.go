@@ -16,6 +16,10 @@ type Config struct {
 	// StepBits holds the number of bits to use for Step
 	// Remember, you have a total 22 bits to share between Node/Step
 	StepBits uint8
+
+	// MaxOverflowMs specifies the number of milliseconds a Node is allowed to
+	// go over by
+	MaxOverflowMs int64
 }
 
 var defaultConfig = Config{

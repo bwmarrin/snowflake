@@ -59,7 +59,7 @@ func TestNewNodeWithConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid node & step bits; NodeBits+StepBits should be 22",
+			name: "invalid node & step bits; NodeBits+StepBits cannot me more than 22",
 			args: args{
 				node: -1,
 				c: Config{
@@ -70,12 +70,24 @@ func TestNewNodeWithConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid node & step bits; NodeBits+StepBits should be 22",
+			name: "invalid node & step bits; NodeBits+StepBits cannot be less than 22",
 			args: args{
 				node: -1,
 				c: Config{
 					NodeBits: 13,
-					StepBits: 20,
+					StepBits: 2,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid max-overflow; it should be 0 or more",
+			args: args{
+				node: -1,
+				c: Config{
+					NodeBits:      12,
+					StepBits:      10,
+					MaxOverflowMs: -1,
 				},
 			},
 			wantErr: true,
