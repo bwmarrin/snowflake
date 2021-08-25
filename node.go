@@ -49,6 +49,7 @@ func NewNodeWithConfig(node int64, c Config) (*Node, error) {
 	return &Node{
 		// add time.Duration to curTime to make sure we use the monotonic clock if available
 		epoch:     curTime.Add(time.Unix(c.Epoch/1000, (c.Epoch%1000)*1000000).Sub(curTime)),
+		time:      -1,
 		node:      node,
 		nodeMask:  nodeMax << c.StepBits,
 		stepMask:  -1 ^ (-1 << c.StepBits),

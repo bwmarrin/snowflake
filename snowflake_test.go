@@ -23,6 +23,25 @@ func TestNewNode(t *testing.T) {
 
 }
 
+// The very first ID from a Node should have step bits set to 0.
+func TestFirstGenerateIsAbsoluteZero(t *testing.T) {
+	epoch := time.Now().UnixNano() / 1000000
+	node, err := NewNodeWithConfig(0, Config{
+		Epoch:    epoch,
+		NodeBits: 10,
+		StepBits: 12,
+	})
+
+	if err != nil {
+		t.Fatalf("error initialising Node; err:%v", err)
+	}
+
+	id := node.Generate()
+	if id != 0 {
+		t.Fatalf("ID expected to be 0; got %d", id)
+	}
+}
+
 // lazy check if Generate will create duplicate IDs
 // would be good to later enhance this with more smarts
 func TestGenerateDuplicateID(t *testing.T) {
