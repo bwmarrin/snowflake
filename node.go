@@ -32,8 +32,8 @@ func NewNodeWithConfig(node int64, c Config) (*Node, error) {
 		return nil, errors.New("invalid config; StepBits cannot be 0")
 	}
 
-	if c.NodeBits+c.StepBits > 22 {
-		return nil, errors.New("NodeBits + StepBits should be no more than 22")
+	if c.NodeBits+c.StepBits != 22 {
+		return nil, errors.New("invalid config; NodeBits + StepBits should be 22")
 	}
 
 	nodeMax := int64(-1 ^ (-1 << c.NodeBits))

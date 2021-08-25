@@ -59,11 +59,22 @@ func TestNewNodeWithConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid ode & step bits; NodeBits+StepBits should be no more than 22",
+			name: "invalid node & step bits; NodeBits+StepBits should be 22",
 			args: args{
 				node: -1,
 				c: Config{
 					NodeBits: 10,
+					StepBits: 20,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid node & step bits; NodeBits+StepBits should be 22",
+			args: args{
+				node: -1,
+				c: Config{
+					NodeBits: 13,
 					StepBits: 20,
 				},
 			},
