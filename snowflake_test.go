@@ -66,7 +66,7 @@ func TestRace(t *testing.T) {
 	go func() {
 		for i := 0; i < 1000000000; i++ {
 
-			NewNode(1)
+			_, _ = NewNode(1)
 		}
 	}()
 
@@ -346,13 +346,13 @@ func TestMarshalJSON(t *testing.T) {
 	id := ID(13587)
 	expected := "\"13587\""
 
-	bytes, err := id.MarshalJSON()
+	json, err := id.MarshalJSON()
 	if err != nil {
 		t.Fatalf("Unexpected error during MarshalJSON")
 	}
 
-	if string(bytes) != expected {
-		t.Fatalf("Got %s, expected %s", string(bytes), expected)
+	if string(json) != expected {
+		t.Fatalf("Got %s, expected %s", string(json), expected)
 	}
 }
 
@@ -401,7 +401,7 @@ func BenchmarkParseBase32(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseBase32([]byte(b32i))
+		_, _ = ParseBase32([]byte(b32i))
 	}
 }
 func BenchmarkBase32(b *testing.B) {
@@ -426,7 +426,7 @@ func BenchmarkParseBase58(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseBase58([]byte(b58))
+		_, _ = ParseBase58([]byte(b58))
 	}
 }
 func BenchmarkBase58(b *testing.B) {
@@ -472,14 +472,14 @@ func BenchmarkUnmarshal(b *testing.B) {
 	// Generate the ID to unmarshal
 	node, _ := NewNode(1)
 	id := node.Generate()
-	bytes, _ := id.MarshalJSON()
+	json, _ := id.MarshalJSON()
 
 	var id2 ID
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = id2.UnmarshalJSON(bytes)
+		_ = id2.UnmarshalJSON(json)
 	}
 }
 
