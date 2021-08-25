@@ -127,3 +127,73 @@ func (n *Node) getOverflow(now int64) Overflow {
 		Step: n.step,
 	}
 }
+
+// GenerateN generates up to N number of IDs
+// If the time element of the ID goes beyond the overflow limit, then fewer
+// IDs are generated.
+func (n *Node) GenerateN(N int64) (ids Block, of Overflow) {
+	if N < 1 {
+		return
+	}
+
+	n.mu.Lock()
+
+	now := time.Since(n.epoch).Nanoseconds() / 1000000
+
+	maxN := n.getMaxBlockSize(now)
+	if maxN > 0 {
+		if N > maxN {
+			N = maxN
+		}
+
+		ids = Block{
+			First:    n.reserveGetFirstID(now, N),
+			N:        N,
+			NodeMask: n.nodeMask,
+			StepMask: n.stepMask,
+		}
+	}
+
+	of = n.getOverflow(now)
+
+	n.mu.Unlock()
+
+	return
+}
+
+func (n *Node) reserveGetFirstID(now int64, N int64) ID {
+	// we are here because there room for at least one ID
+	if now > n.time {
+		n.time = now
+		n.step = 0
+	} else {
+		n.step = (n.step + 1) & n.stepMask
+		if n.step == 0 {
+			n.time++
+		}
+	}
+
+	first := n.MakeID(n.time, n.step)
+
+	n.time += (n.step + N - 1) / (n.stepMask + 1)
+	n.step = (n.step + N - 1) & n.stepMask
+
+	return first
+}
+
+func (n *Node) getMaxBlockSize(now int64) int64 {
+	if n.time < now {
+		return (n.maxOverflowMs + 1) * (n.stepMask + 1)
+	}
+
+	if n.time == now {
+		return n.maxOverflowMs*(n.stepMask+1) + n.stepMask - n.step
+	}
+
+	ofMs := n.time - now
+	if ofMs > n.maxOverflowMs {
+		return 0
+	}
+
+	return (n.maxOverflowMs-ofMs)*(n.stepMask+1) + n.stepMask - n.step
+}

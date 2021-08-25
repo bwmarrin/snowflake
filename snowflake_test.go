@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+	"time"
 )
 
 //******************************************************************************
@@ -466,6 +467,48 @@ func BenchmarkGenerateMaxSequence(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_ = node.Generate()
 	}
+}
+
+func BenchmarkGenerateN(b *testing.B) {
+	node, _ := NewNodeWithConfig(1, Config{
+		NodeBits:      10,
+		StepBits:      12,
+		MaxOverflowMs: 1000,
+	})
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, _ = node.GenerateN(50000)
+	}
+}
+
+func BenchmarkGenerateNIterate(b *testing.B) {
+	node, _ := NewNodeWithConfig(1, Config{
+		NodeBits:      10,
+		StepBits:      12,
+		MaxOverflowMs: 1000,
+	})
+
+	b.ReportAllocs()
+
+	var total int64
+	var id ID
+	var more bool
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		ids, _ := node.GenerateN(50000)
+		total += ids.N
+		itr := NewBlockIterator(ids)
+		for {
+			id, more = itr.Next()
+			if !more {
+				break
+			}
+		}
+	}
+	_ = id
 }
 
 func BenchmarkUnmarshal(b *testing.B) {
