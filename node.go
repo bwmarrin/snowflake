@@ -87,11 +87,13 @@ func (n *Node) Generate() ID {
 
 	n.time = now
 
-	r := ID((now)<<n.timeShift |
-		(n.node << n.nodeShift) |
-		(n.step),
-	)
+	r := n.MakeID(n.time, n.step)
 
 	n.mu.Unlock()
 	return r
+}
+
+// MakeID makes an ID with the specified time and step
+func (n *Node) MakeID(time int64, step int64) ID {
+	return ID(time<<n.timeShift | n.node<<n.nodeShift | step)
 }
