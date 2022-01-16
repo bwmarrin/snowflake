@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"strconv"
 	"sync"
 	"time"
@@ -295,6 +296,11 @@ func ParseBase64(id string) (ID, error) {
 	}
 	return ParseBytes(b)
 
+}
+
+// CRC32C returns a crc32 castagnoli string of the snowflake ID
+func (f ID) CRC32C() string {
+	return strconv.Itoa(int(crc32.Checksum(f.Bytes(), crc32.MakeTable(crc32.Castagnoli))))
 }
 
 // Bytes returns a byte slice of the snowflake ID
