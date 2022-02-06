@@ -136,14 +136,14 @@ func (n *Node) Generate() ID {
 
 	n.mu.Lock()
 
-	now := time.Since(n.epoch).Nanoseconds() / 1000000
+	now := time.Since(n.epoch).Milliseconds()
 
 	if now == n.time {
 		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
 			for now <= n.time {
-				now = time.Since(n.epoch).Nanoseconds() / 1000000
+				now = time.Since(n.epoch).Milliseconds()
 			}
 		}
 	} else {
