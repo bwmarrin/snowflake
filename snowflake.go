@@ -179,9 +179,11 @@ func (f ID) String() string {
 
 // ParseString converts a string into a snowflake ID
 func ParseString(id string) (ID, error) {
+	if id == "undefined" {
+		return ID(0), nil
+	}
 	i, err := strconv.ParseInt(id, 10, 64)
 	return ID(i), err
-
 }
 
 // Base2 returns a string base2 of the snowflake ID
@@ -363,6 +365,11 @@ func (f *ID) UnmarshalJSON(b []byte) error {
 			return nil
 		}
 		return JSONSyntaxError{b}
+	}
+
+	if string(b) == "undefined" {
+		*f = ID(0)
+		return nil
 	}
 
 	i, err := strconv.ParseInt(string(b[1:l-1]), 10, 64)
