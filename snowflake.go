@@ -230,6 +230,10 @@ func ParseBase32(b []byte) (ID, error) {
 			return -1, ErrInvalidBase32
 		}
 		id = id*32 + int64(decodeBase32Map[b[i]])
+		if id <= 0 {
+			// overflow!
+			return -1, ErrInvalidBase32
+		}
 	}
 
 	return ID(id), nil
@@ -277,6 +281,10 @@ func ParseBase58(b []byte) (ID, error) {
 			return -1, ErrInvalidBase58
 		}
 		id = id*58 + int64(decodeBase58Map[b[i]])
+		if id <= 0 {
+			// overflow!
+			return -1, ErrInvalidBase58
+		}
 	}
 
 	return ID(id), nil
