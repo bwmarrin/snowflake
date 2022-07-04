@@ -134,6 +134,7 @@ func NewNode(node int64) (*Node, error) {
 func (n *Node) Generate() ID {
 
 	n.mu.Lock()
+	defer n.mu.Unlock()
 
 	now := time.Since(n.epoch).Milliseconds()
 
@@ -157,7 +158,6 @@ func (n *Node) Generate() ID {
 		(n.step),
 	)
 
-	n.mu.Unlock()
 	return r
 }
 
