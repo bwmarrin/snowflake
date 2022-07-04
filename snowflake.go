@@ -123,7 +123,7 @@ func NewNode(node int64) (*Node, error) {
 
 	var curTime = time.Now()
 	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = curTime.Add(time.Unix(Epoch/1000, (Epoch%1000)*1000000).Sub(curTime))
+	n.epoch = curTime.Add(time.Unix(Epoch/1e3, (Epoch%1e3)*1e6).Sub(curTime))
 
 	return &n, nil
 }
