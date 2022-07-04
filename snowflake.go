@@ -121,9 +121,8 @@ func NewNode(node int64) (*Node, error) {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
 	}
 
-	var curTime = time.Now()
 	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = curTime.Add(time.Unix(Epoch/1e3, (Epoch%1e3)*1e6).Sub(curTime))
+	n.epoch = time.Unix(Epoch/1e3, (Epoch%1e3)*1e6)
 
 	return &n, nil
 }
