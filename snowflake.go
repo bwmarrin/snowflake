@@ -141,8 +141,9 @@ func (n *Node) Generate() ID {
 		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
-			for now <= n.time {
-				now = time.Since(n.epoch).Milliseconds()
+			now += 1 // set it to the next Millisecond
+			if time.Since(n.epoch.Add(time.Duration(now)*time.Millisecond)) < 0 {
+				time.Sleep(time.Millisecond)
 			}
 		}
 	} else {
