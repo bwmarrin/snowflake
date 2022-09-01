@@ -21,7 +21,7 @@ type Overflow struct {
 
 // IsZero evaluates to true if there is no overflow
 func (o Overflow) IsZero() bool {
-	return o.Time.IsZero()
+	return o.Ms == 0
 }
 
 // Duration gives the time-duration equivalent of the overflow.
@@ -33,7 +33,7 @@ func (o Overflow) Duration() time.Duration {
 		return 0
 	}
 
-	return time.Duration(o.Ms+1) * time.Millisecond
+	return time.Duration(o.Ms) * time.Millisecond
 }
 
 func (o Overflow) DurationToClear() time.Duration {

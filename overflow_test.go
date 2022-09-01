@@ -53,7 +53,7 @@ func TestOverflow_Duration(t *testing.T) {
 				Ms:   1,
 				Step: 2,
 			},
-			want: 2 * time.Millisecond,
+			want: 1 * time.Millisecond,
 		},
 	}
 	for _, tt := range tests {
