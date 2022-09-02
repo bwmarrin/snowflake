@@ -3,15 +3,14 @@ snowflake
 [![GoDoc](https://godoc.org/github.com/redmatter/snowflake?status.svg)](https://godoc.org/github.com/redmatter/snowflake)
 [![Go report](http://goreportcard.com/badge/redmatter/snowflake)](http://goreportcard.com/report/redmatter/snowflake)
 [![Coverage](http://gocover.io/_badge/github.com/redmatter/snowflake)](https://gocover.io/github.com/redmatter/snowflake)
-[![Build Status](https://travis-ci.org/redmatter/snowflake.svg?branch=master)](https://travis-ci.org/redmatter/snowflake)
 
-snowflake provides
+### Features
 * A very simple Twitter snowflake generator.
 * Methods to parse existing snowflake IDs.
 * Methods to convert a snowflake ID into several other data types and back.
 * JSON Marshal/Unmarshal functions to easily use snowflake IDs within a JSON API.
 * Monotonic Clock calculations protect from clock drift.
-* Advanced use-case for bulk ID generation.
+* Advanced use-case to generate a block of IDs.
   
 ### ID Format
 By default, the ID format follows the original Twitter snowflake format.
@@ -35,7 +34,10 @@ initialising node using `NewNodeWithConfig()`.
 Each time you generate an ID, it works, like this.
 * A timestamp with millisecond precision is stored using 41 bits of the ID.
 * Then the NodeID is added in subsequent bits.
-* Then the Sequence Number is added, starting at 0 and incrementing for each ID generated in the same millisecond. If you generate enough IDs in the same millisecond that the sequence would roll over or overfill then the generate function will pause until the next millisecond.
+* Then the Sequence Number is added, starting at 0 and incrementing for each ID
+  generated in the same millisecond. If you generate enough IDs in the same
+  millisecond, so that the sequence would roll over or overfill, then the generate 
+  function will pause until the next millisecond.
 
 The default Twitter format shown below.
 ```
@@ -44,7 +46,8 @@ The default Twitter format shown below.
 +--------------------------------------------------------------------------+
 ```
 
-Using the default settings, this allows for 4096 unique IDs to be generated every millisecond, per Node ID.
+Using the default settings, this allows for 4096 unique IDs to be generated every
+millisecond, per Node ID.
 
 ## Getting Started
 
