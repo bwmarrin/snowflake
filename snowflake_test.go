@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
-	"time"
 )
 
 //******************************************************************************
@@ -47,26 +46,14 @@ func TestRace(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 1000000000; i++ {
+
 			NewNode(1)
 		}
 	}()
 
 	for i := 0; i < 4000; i++ {
+
 		node.Generate()
-	}
-
-	ch := make(chan any)
-	go func() {
-		for i := 0; i < 40000; i++ {
-			node.Generate()
-		}
-		close(ch)
-	}()
-
-	select {
-	case <-ch:
-	case <-time.After(time.Second * 5):
-		close(ch)
 	}
 
 }

@@ -121,8 +121,9 @@ func NewNode(node int64) (*Node, error) {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
 	}
 
+	var curTime = time.Now()
 	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = time.Unix(Epoch/1e3, (Epoch%1e3)*1e6)
+	n.epoch = curTime.Add(time.Unix(Epoch/1000, (Epoch%1000)*1000000).Sub(curTime))
 
 	return &n, nil
 }
@@ -142,9 +143,8 @@ func (n *Node) Generate() ID {
 		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
-			now += 1 // set it to the next Millisecond
-			if time.Since(n.epoch.Add(time.Duration(now)*time.Millisecond)) < 0 {
-				time.Sleep(time.Millisecond)
+			for now <= n.time {
+				now = time.Since(n.epoch).Milliseconds()
 			}
 		}
 	} else {
