@@ -2,8 +2,10 @@ package snowflake
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 //******************************************************************************
@@ -26,7 +28,6 @@ func TestNewNode(t *testing.T) {
 // lazy check if Generate will create duplicate IDs
 // would be good to later enhance this with more smarts
 func TestGenerateDuplicateID(t *testing.T) {
-
 	node, _ := NewNode(1)
 
 	var x, y ID
@@ -39,6 +40,48 @@ func TestGenerateDuplicateID(t *testing.T) {
 	}
 }
 
+func TestGenerate(t *testing.T) {
+	for _, nodeID := range []int64{0, 1, 12, nodeMax} {
+		node, err := NewNode(nodeID)
+		if err != nil {
+			t.Fatalf("%d error creating NewNode, %s", nodeID, err)
+		}
+
+		now := time.Since(node.epoch)
+		cnt := int64(0)
+		node.sinceFn = func(time.Time) time.Duration {
+			if cnt == node.stepMask+1 {
+				cnt = 0
+				now += node.timePrecision
+			} else {
+				cnt += 1
+			}
+			return now
+		}
+
+		st := now
+		for i := int64(0); i < 2*node.stepMask; i++ {
+			if i != 0 && (i&node.stepMask) == 0 {
+				st += node.timePrecision
+			}
+
+			stamp := int64(st / node.timePrecision)
+			step := i & node.stepMask
+
+			id := node.Generate()
+			if id.Node() != nodeID {
+				t.Fatalf("%d/%d expected node %d, got %d", nodeID, i, nodeID, id.Node())
+			}
+			if id.Step() != step {
+				t.Fatalf("%d/%d expected step %d, got %d", nodeID, i, step, id.Step())
+			}
+			if id.Time()-Epoch != stamp {
+				t.Fatalf("%d/%d expected time %d, got %d", nodeID, i, stamp, id.Time()-Epoch)
+			}
+		}
+	}
+}
+
 // I feel like there's probably a better way
 func TestRace(t *testing.T) {
 
@@ -47,7 +90,7 @@ func TestRace(t *testing.T) {
 	go func() {
 		for i := 0; i < 1000000000; i++ {
 
-			NewNode(1)
+			_, _ = NewNode(1)
 		}
 	}()
 
@@ -382,7 +425,7 @@ func BenchmarkParseBase32(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseBase32([]byte(b32i))
+		_, _ = ParseBase32([]byte(b32i))
 	}
 }
 func BenchmarkBase32(b *testing.B) {
@@ -407,11 +450,10 @@ func BenchmarkParseBase58(b *testing.B) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ParseBase58([]byte(b58))
+		_, _ = ParseBase58([]byte(b58))
 	}
 }
 func BenchmarkBase58(b *testing.B) {
-
 	node, _ := NewNode(1)
 	sf := node.Generate()
 
@@ -422,29 +464,50 @@ func BenchmarkBase58(b *testing.B) {
 		sf.Base58()
 	}
 }
-func BenchmarkGenerate(b *testing.B) {
 
+func BenchmarkGenerate(b *testing.B) {
 	node, _ := NewNode(1)
+	now := time.Millisecond
+	node.sinceFn = func(time.Time) time.Duration {
+		now += time.Millisecond
+		return now
+	}
 
 	b.ReportAllocs()
-
 	b.ResetTimer()
+
 	for n := 0; n < b.N; n++ {
 		_ = node.Generate()
 	}
 }
 
-func BenchmarkGenerateMaxSequence(b *testing.B) {
+func BenchmarkGenerateMany(b *testing.B) {
+	for _, num := range []int{10, 30, 100} {
+		b.Run(fmt.Sprintf("%d", num), func(b *testing.B) {
+			node, _ := NewNode(int64(num))
+			now := time.Millisecond
+			node.sinceFn = func(time.Time) time.Duration {
+				now += time.Millisecond
+				return now
+			}
 
-	NodeBits = 1
-	StepBits = 21
-	node, _ := NewNode(1)
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for n := 0; n < b.N; n++ {
+				_ = node.GenerateMany(num)
+			}
+		})
+	}
+}
+
+func BenchmarkSince(b *testing.B) {
+	epoch := time.Unix(Epoch/1000, (Epoch%1000)*1000000)
 
 	b.ReportAllocs()
-
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_ = node.Generate()
+		time.Since(epoch)
 	}
 }
 

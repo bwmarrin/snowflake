@@ -24,6 +24,9 @@ var (
 	// Remember, you have a total 22 bits to share between Node/Step
 	StepBits uint8 = 12
 
+	// TimePrecision define the precision of timestamp, default is millisecond.
+	TimePrecision time.Duration = time.Millisecond
+
 	// DEPRECATED: the below four variables will be removed in a future release.
 	mu        sync.Mutex
 	nodeMax   int64 = -1 ^ (-1 << NodeBits)
@@ -89,6 +92,14 @@ type Node struct {
 	stepMask  int64
 	timeShift uint8
 	nodeShift uint8
+
+	timePrecision time.Duration
+
+	// avoid new slice when generate single id
+	singleIDSlice []ID
+
+	// for unit test
+	sinceFn func(time.Time) time.Duration
 }
 
 // An ID is a custom type used for a snowflake ID.  This is used so we can
@@ -116,6 +127,10 @@ func NewNode(node int64) (*Node, error) {
 	n.stepMask = -1 ^ (-1 << StepBits)
 	n.timeShift = NodeBits + StepBits
 	n.nodeShift = StepBits
+	n.timePrecision = TimePrecision
+	n.singleIDSlice = make([]ID, 1)
+
+	n.sinceFn = time.Since
 
 	if n.node < 0 || n.node > n.nodeMax {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
@@ -133,32 +148,47 @@ func NewNode(node int64) (*Node, error) {
 // - Make sure your system is keeping accurate system time
 // - Make sure you never have multiple nodes running with the same node ID
 func (n *Node) Generate() ID {
+	return n.generate(1)[0]
+}
 
+func (n *Node) GenerateMany(num int) []ID {
+	return n.generate(num)
+}
+
+func (n *Node) generate(num int) []ID {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	now := time.Since(n.epoch).Milliseconds()
-
-	if now == n.time {
-		n.step = (n.step + 1) & n.stepMask
-
-		if n.step == 0 {
-			for now <= n.time {
-				now = time.Since(n.epoch).Milliseconds()
-			}
-		}
-	} else {
-		n.step = 0
+	i := 0
+	ids := n.singleIDSlice
+	if num > 1 {
+		ids = make([]ID, num)
 	}
 
+	now := int64(n.sinceFn(n.epoch) / n.timePrecision)
+
+	if now > n.time {
+		n.step = 0
+	} else if now < n.time {
+		now = n.time
+	}
+
+	for i < num {
+		for n.step <= n.stepMask && i < num {
+			ids[i] = ID((now)<<n.timeShift | (n.node << n.nodeShift) | n.step)
+			n.step += 1
+			i += 1
+		}
+		if n.step == (n.stepMask+1) && i < num {
+			n.step = 0
+			for now <= n.time {
+				now = int64(n.sinceFn(n.epoch) / n.timePrecision)
+			}
+		}
+	}
 	n.time = now
 
-	r := ID((now)<<n.timeShift |
-		(n.node << n.nodeShift) |
-		(n.step),
-	)
-
-	return r
+	return ids
 }
 
 // Int64 returns an int64 of the snowflake ID
@@ -325,7 +355,7 @@ func ParseIntBytes(id [8]byte) ID {
 // Time returns an int64 unix timestamp in milliseconds of the snowflake ID time
 // DEPRECATED: the below function will be removed in a future release.
 func (f ID) Time() int64 {
-	return (int64(f) >> timeShift) + Epoch
+	return (int64(f)>>timeShift)*int64(TimePrecision/time.Millisecond) + Epoch
 }
 
 // Node returns an int64 of the snowflake ID node number
