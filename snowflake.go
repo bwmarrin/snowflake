@@ -99,6 +99,9 @@ type ID int64
 // IDs
 func NewNode(node int64) (*Node, error) {
 
+	if NodeBits+StepBits > 22 {
+		return nil, errors.New("Remember, you have a total 22 bits to share between Node/Step")
+	}
 	// re-calc in case custom NodeBits or StepBits were set
 	// DEPRECATED: the below block will be removed in a future release.
 	mu.Lock()
