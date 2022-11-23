@@ -25,9 +25,10 @@ By default, the ID format follows the original Twitter snowflake format.
 
 ### Custom Format
 You can alter the number of bits used for the node id and step number (sequence)
-by setting the snowflake.NodeBits and snowflake.StepBits values.  Remember that
-There is a maximum of 22 bits available that can be shared between these two 
-values. You do not have to use all 22 bits.
+by setting the snowflake.NodeBits and snowflake.StepBits values.  You can alter
+time precision by setting the snowflake.TimePrecision value.  Remember that
+There is a maximum of 22 bits available that can be shared between these two values.
+You do not have to use all 22 bits.
 
 ### Custom Epoch
 By default this package uses the Twitter Epoch of 1288834974657 or Nov 04 2010 01:42:54.
