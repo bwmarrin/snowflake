@@ -1,3 +1,3 @@
-module github.com/bwmarrin/snowflake
+module github.com/hash-rabbit/snowflake
 
 go 1.16
