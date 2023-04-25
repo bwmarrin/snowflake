@@ -58,6 +58,13 @@ func TestRace(t *testing.T) {
 
 }
 
+func TestCustomSet(t *testing.T) {
+	node, _ := NewNode(1)
+	node.SetNodeAndStepBits(4, 4)
+	id := node.Generate()
+	t.Logf("Int64:%#v", id.Int64())
+}
+
 //******************************************************************************
 // Converters/Parsers Test funcs
 // We should have funcs here to test conversion both ways for everything
