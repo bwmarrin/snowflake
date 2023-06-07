@@ -6,6 +6,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/crc32"
+	"math/rand"
+	"net"
 	"strconv"
 	"sync"
 	"time"
@@ -365,4 +368,57 @@ func (f *ID) UnmarshalJSON(b []byte) error {
 
 	*f = ID(i)
 	return nil
+}
+
+func GetLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() == nil {
+				continue
+			}
+
+			return ipnet.IP.String()
+		}
+	}
+	return ""
+}
+
+func GetIPWorkerID() int64 {
+	ip := GetLocalIP()
+	if ip == "" {
+		return GetRandWorkerID()
+	}
+
+	h := crc32.NewIEEE()
+	h.Write([]byte(ip))
+	return int64(h.Sum32()) & nodeMax
+}
+
+func GetRandWorkerID() int64 {
+	rand.Seed(time.Now().UnixNano())
+	return int64(rand.Uint32()) & nodeMax
+}
+
+func GetMacAddrWorkerID() int64 {
+	ipnet, err := net.Interfaces()
+	if err != nil {
+		return GetRandWorkerID()
+	}
+
+	h := crc32.NewIEEE()
+	for _, value := range ipnet {
+		h.Write(value.HardwareAddr)
+	}
+	return int64(h.Sum32()) & nodeMax
+}
+
+func HashWorkerID(data []byte) int64 {
+	h := crc32.NewIEEE()
+	h.Write(data)
+	return int64(h.Sum32()) & nodeMax
 }

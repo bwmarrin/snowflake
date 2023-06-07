@@ -2,8 +2,11 @@ package snowflake
 
 import (
 	"bytes"
+	"fmt"
+	"math/rand"
 	"reflect"
 	"testing"
+	"time"
 )
 
 //******************************************************************************
@@ -577,4 +580,42 @@ func TestParseBase58(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetLocalIP(t *testing.T) {
+	ip := GetLocalIP()
+	if ip == "" {
+		t.Fatalf("can't get ip")
+	}
+	if ip == "127.0.0.1" {
+		t.Error("can't get non-localhost ip")
+	}
+}
+
+func TestGetRandWorkerID(t *testing.T) {
+	for i := 0; i < 10000; i++ {
+		wid := GetRandWorkerID()
+		if wid < 0 && wid > nodeMax { // 0 - 1023
+			t.Errorf("rand worker id:%v is invalid", wid)
+		}
+	}
+}
+
+func TestGetMacAddrWorkerID(t *testing.T) {
+	wid := GetMacAddrWorkerID()
+	if wid < 0 && wid > nodeMax { // 0 - 1023
+		t.Errorf("mac-addr worker id:%v is invalid", wid)
+	}
+}
+
+func TestHashWorkerID(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 1000; i++ {
+		data := fmt.Sprintf("%v", rand.Int63())
+		wid := HashWorkerID([]byte(data))
+		if wid < 0 && wid > nodeMax { // 0 - 1023
+			t.Errorf("hash worker id:%v is invalid", wid)
+		}
+	}
+
 }
