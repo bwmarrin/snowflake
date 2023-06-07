@@ -90,7 +90,6 @@ import (
 )
 
 func main() {
-
 	// Create a new Node with a Node number of 1
 	node, err := snowflake.NewNode(1)
 	if err != nil {
@@ -116,8 +115,18 @@ func main() {
 	// Print out the ID's sequence number
 	fmt.Printf("ID Step  : %d\n", id.Step())
 
-  // Generate and print, all in one.
-  fmt.Printf("ID       : %d\n", node.Generate().Int64())
+	// Generate and print, all in one.
+	fmt.Printf("ID       : %d\n", node.Generate().Int64())
+
+	// Output:
+	// Int64  ID: 1666265843916345344
+	// String ID: 1666265843916345344
+	// Base2  ID: 1011100011111110000111111010011110000000000000001000000000000
+	// Base64 ID: MTY2NjI2NTg0MzkxNjM0NTM0NA==
+	// ID Time  : 1686103709569
+	// ID Node  : 1
+	// ID Step  : 0
+	// ID       : 1666265843916345345
 }
 ```
 
