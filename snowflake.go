@@ -152,6 +152,10 @@ func (n *Node) Generate() ID {
 		}
 	} else {
 		n.step = 0
+		for now <= n.time { //clock move black
+			time.Sleep(time.Millisecond * time.Duration(n.time-now))
+			now = time.Since(n.epoch).Milliseconds()
+		}
 	}
 
 	n.time = now
