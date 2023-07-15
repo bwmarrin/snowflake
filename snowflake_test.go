@@ -58,6 +58,21 @@ func TestRace(t *testing.T) {
 
 }
 
+func TestClockMoveDuplicateID(t *testing.T) {
+	node, _ := NewNode(10)
+	Ids := make(map[ID]int, 0)
+	for i := 0; i < 4000; i++ {
+		if i == 2000 {
+			node.time = node.time + 5 //clock move 5ms
+		}
+		x := node.Generate()
+		Ids[x]++
+		if Ids[x] >= 2 {
+			t.Errorf("x(%d) & count(%d) colock black clash", x, Ids[x])
+		}
+	}
+}
+
 //******************************************************************************
 // Converters/Parsers Test funcs
 // We should have funcs here to test conversion both ways for everything
