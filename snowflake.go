@@ -174,6 +174,17 @@ func ParseInt64(id int64) ID {
 	return ID(id)
 }
 
+// Hex returns a hexadecimal string of the snowflake ID
+func (f ID) Hex() string {
+	return strconv.FormatInt(int64(f), 16)
+}
+
+// ParseHex converts a hexadecimal string into a snowflake ID
+func ParseHex(id string) (ID, error) {
+	i, err := strconv.ParseInt(id, 16, 64)
+	return ID(i), err
+}
+
 // String returns a string of the snowflake ID
 func (f ID) String() string {
 	return strconv.FormatInt(int64(f), 10)

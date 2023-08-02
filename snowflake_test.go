@@ -71,6 +71,7 @@ func TestPrintAll(t *testing.T) {
 	id := node.Generate()
 
 	t.Logf("Int64    : %#v", id.Int64())
+	t.Logf("Hex      : %#v", id.Hex())
 	t.Logf("String   : %#v", id.String())
 	t.Logf("Base2    : %#v", id.Base2())
 	t.Logf("Base32   : %#v", id.Base32())
@@ -102,6 +103,43 @@ func TestInt64(t *testing.T) {
 		t.Fatalf("pID %v != mi %v", pID.Int64(), mi)
 	}
 
+}
+
+func TestHex(t *testing.T) {
+	node, err := NewNode(0)
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	oID := node.Generate()
+	hi := oID.Hex()
+
+	pID, err := ParseHex(hi)
+	if err != nil {
+		t.Fatalf("error parsing, %s", err)
+	}
+
+	if pID != oID {
+		t.Fatalf("pID %v != oID %v", pID, oID)
+	}
+
+	ms := `1234567890ABCDEF`
+	_, err = ParseHex(ms)
+	if err != nil {
+		t.Fatalf("error parsing, %s", err)
+	}
+
+	ms = `1234567890ABCDEG`
+	_, err = ParseHex(ms)
+	if err == nil {
+		t.Fatalf("no error parsing %s", ms)
+	}
+
+	ms = `1234567890ABCDEF8`
+	_, err = ParseHex(ms)
+	if err == nil {
+		t.Fatalf("no error parsing %s", ms)
+	}
 }
 
 func TestString(t *testing.T) {
