@@ -37,7 +37,7 @@ const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
 
 var decodeBase32Map [256]byte
 
-const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
+const encodeBase58Map = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 var decodeBase58Map [256]byte
 
