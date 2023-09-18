@@ -14,7 +14,7 @@ import (
 var (
 	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
 	// You may customize this to set a different epoch for your application.
-	Epoch int64 = 1288834974657
+	//Epoch int64 = 1288834974657
 
 	// NodeBits holds the number of bits to use for Node
 	// Remember, you have a total 22 bits to share between Node/Step
@@ -97,11 +97,19 @@ type ID int64
 
 // NewNode returns a new snowflake node that can be used to generate snowflake
 // IDs
-func NewNode(node int64) (*Node, error) {
+func NewNode(node int64, startTime time.Time) (*Node, error) {
 
 	if NodeBits+StepBits > 22 {
 		return nil, errors.New("Remember, you have a total 22 bits to share between Node/Step")
 	}
+
+	startUnixMilli := startTime.UnixMilli()
+	if  startUnixMilli > time.Now().UnixMilli(){
+		return nil, errors.New("Start time cannot be greater than time.Now()")
+
+	}
+	startEpoch := startTime.UnixMilli()
+
 	// re-calc in case custom NodeBits or StepBits were set
 	// DEPRECATED: the below block will be removed in a future release.
 	mu.Lock()
@@ -126,7 +134,7 @@ func NewNode(node int64) (*Node, error) {
 
 	var curTime = time.Now()
 	// add time.Duration to curTime to make sure we use the monotonic clock if available
-	n.epoch = curTime.Add(time.Unix(Epoch/1000, (Epoch%1000)*1000000).Sub(curTime))
+	n.epoch = curTime.Add(time.Unix(startEpoch/1000, (startEpoch%1000)*1000000).Sub(curTime))
 
 	return &n, nil
 }
