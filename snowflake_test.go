@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+	"time"
 )
 
 //******************************************************************************
@@ -21,6 +22,23 @@ func TestNewNode(t *testing.T) {
 		t.Fatalf("no error creating NewNode, %s", err)
 	}
 
+}
+
+func TestNewNodeWithStartTime(t *testing.T) {
+	_, err := NewNodeWithStartTime(0, time.Now().Add(-1*time.Hour)) // valid node and valid past time
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	_, err = NewNodeWithStartTime(1025, time.Now().Add(-1*time.Hour)) // invalid node but valid past time
+	if err == nil {
+		t.Fatalf("no error creating NewNode, %s", err)
+	}
+
+	_, err = NewNodeWithStartTime(7, time.Now().Add(10*time.Hour)) // valid node but invalid future time
+	if err == nil {
+		t.Fatalf("no error creating NewNode, %s", err)
+	}
 }
 
 // lazy check if Generate will create duplicate IDs
@@ -316,6 +334,32 @@ func TestIntBytes(t *testing.T) {
 	pID = ParseIntBytes(ms)
 	if pID.Int64() != mi {
 		t.Fatalf("pID %v != mi %v", pID.Int64(), mi)
+	}
+
+}
+
+func TestID_Time(t *testing.T) {
+	node, err := NewNodeWithStartTime(1000, time.Now().Add(-1*24*2000*time.Hour))
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	timeForID, err := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+	int64Id := node.Generate().Int64()
+	snowFlakeID := ID(int64Id)
+	if timeForID.UnixMilli() > snowFlakeID.Time() { // timeForId is generated first so should be less than int64Id
+		t.Fatalf("error matching time, %s", err)
+	}
+
+	node, err = NewNodeWithStartTime(1000, time.Now().Add(-1*time.Hour))
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	int64Id = node.Generate().Int64()
+	snowFlakeID = ID(int64Id)
+	if int64Id < snowFlakeID.Time() {
+		t.Fatalf("error matching time, %s", err)
 	}
 
 }

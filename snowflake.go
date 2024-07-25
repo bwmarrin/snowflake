@@ -37,7 +37,7 @@ const encodeBase32Map = "ybndrfg8ejkmcpqxot1uwisza345h769"
 
 var decodeBase32Map [256]byte
 
-const encodeBase58Map = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
+const encodeBase58Map = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 var decodeBase58Map [256]byte
 
@@ -127,6 +127,47 @@ func NewNode(node int64) (*Node, error) {
 	var curTime = time.Now()
 	// add time.Duration to curTime to make sure we use the monotonic clock if available
 	n.epoch = curTime.Add(time.Unix(Epoch/1000, (Epoch%1000)*1000000).Sub(curTime))
+
+	return &n, nil
+}
+
+func NewNodeWithStartTime(node int64, startTime time.Time) (*Node, error) {
+	if NodeBits+StepBits > 22 {
+		return nil, errors.New("Remember, you have a total 22 bits to share between Node/Step")
+	}
+
+	startUnixMilli := startTime.UnixMilli()
+	if startUnixMilli > time.Now().UnixMilli() {
+		return nil, errors.New("Start time cannot be greater than time.Now()")
+
+	}
+	startEpoch := startTime.UnixMilli()
+	Epoch = startEpoch
+	// re-calc in case custom NodeBits or StepBits were set
+	// DEPRECATED: the below block will be removed in a future release.
+	mu.Lock()
+	nodeMax = -1 ^ (-1 << NodeBits)
+	nodeMask = nodeMax << StepBits
+	stepMask = -1 ^ (-1 << StepBits)
+	timeShift = NodeBits + StepBits
+	nodeShift = StepBits
+	mu.Unlock()
+
+	n := Node{}
+	n.node = node
+	n.nodeMax = -1 ^ (-1 << NodeBits)
+	n.nodeMask = n.nodeMax << StepBits
+	n.stepMask = -1 ^ (-1 << StepBits)
+	n.timeShift = NodeBits + StepBits
+	n.nodeShift = StepBits
+
+	if n.node < 0 || n.node > n.nodeMax {
+		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
+	}
+
+	var curTime = time.Now()
+	// add time.Duration to curTime to make sure we use the monotonic clock if available
+	n.epoch = curTime.Add(time.Unix(startEpoch/1000, (startEpoch%1000)*1000000).Sub(curTime))
 
 	return &n, nil
 }
