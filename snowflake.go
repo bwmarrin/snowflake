@@ -354,13 +354,13 @@ func (f ID) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON converts a json byte array of a snowflake ID into an ID type.
 func (f *ID) UnmarshalJSON(b []byte) error {
-	if len(b) < 3 || b[0] != '"' || b[len(b)-1] != '"' {
-		return JSONSyntaxError{b}
+	if len(b) >= 3 && b[0] == '"' && b[len(b)-1] == '"' {
+		b = b[1 : len(b)-1]
 	}
 
-	i, err := strconv.ParseInt(string(b[1:len(b)-1]), 10, 64)
+	i, err := strconv.ParseInt(string(b), 10, 64)
 	if err != nil {
-		return err
+		return JSONSyntaxError{b}
 	}
 
 	*f = ID(i)

@@ -352,7 +352,14 @@ func TestUnmarshalJSON(t *testing.T) {
 		expectedErr error
 	}{
 		{`"13587"`, 13587, nil},
-		{`1`, 0, JSONSyntaxError{[]byte(`1`)}},
+		{`1`, 1, nil},
+		{`12`, 12, nil},
+		{`13587`, 13587, nil},
+		{``, 0, JSONSyntaxError{[]byte(``)}},
+		{`"1`, 0, JSONSyntaxError{[]byte(`"1`)}},
+		{`1"`, 0, JSONSyntaxError{[]byte(`1"`)}},
+		{`12"`, 0, JSONSyntaxError{[]byte(`12"`)}},
+		{`"12`, 0, JSONSyntaxError{[]byte(`"12`)}},
 		{`"invalid`, 0, JSONSyntaxError{[]byte(`"invalid`)}},
 	}
 
