@@ -578,3 +578,72 @@ func TestParseBase58(t *testing.T) {
 		})
 	}
 }
+
+func TestNewWithOption(t *testing.T) {
+	allocator := new(testNodeIdAllocator)
+	synchronizer := new(testTimeSynchronizer)
+	type args struct {
+		options []OptionFn
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *Node
+		wantErr bool
+	}{
+		{
+			name: "ok",
+			args: args{
+				options: []OptionFn{
+					WithNodeIdAllocator(allocator),
+					WithTimeSynchronizer(synchronizer),
+				},
+			},
+			want: &Node{
+				allocator:    allocator,
+				synchronizer: synchronizer,
+			},
+			wantErr: false,
+		},
+		{
+			name: "no synchronizer",
+			args: args{
+				options: []OptionFn{
+					WithNodeIdAllocator(allocator),
+				},
+			},
+			want: &Node{
+				allocator: allocator,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewWithOption(tt.args.options...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewWithOption() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.allocator, tt.want.allocator) {
+				t.Errorf("NewWithOption() allocator got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got.synchronizer, tt.want.synchronizer) {
+				t.Errorf("NewWithOption() synchronizer got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+type testTimeSynchronizer struct {
+}
+
+func (t testTimeSynchronizer) Async(_ int64) {
+	return
+}
+
+type testNodeIdAllocator struct{}
+
+func (t testNodeIdAllocator) Alloc() (nodeId int64, err error) {
+	return 1, nil
+}

@@ -89,6 +89,42 @@ type Node struct {
 	stepMask  int64
 	timeShift uint8
 	nodeShift uint8
+
+	// allocator node id allocator
+	allocator NodeIdAllocator
+	// synchronizer time synchronizer recommended to use async operations
+	synchronizer TimeSynchronizer
+}
+
+// NewWithOption creates a node based on options
+func NewWithOption(options ...OptionFn) (*Node, error) {
+	op := &Option{}
+	for _, option := range options {
+		option(op)
+	}
+
+	var (
+		allocator    = op.allocator
+		synchronizer = op.synchronizer
+	)
+	if allocator == nil {
+		return nil, errors.New("allocator is not nil")
+	}
+
+	nodeId, err := allocator.Alloc()
+	if err != nil {
+		return nil, err
+	}
+
+	node, err := NewNode(nodeId)
+	if err != nil {
+		return nil, err
+	}
+
+	node.allocator = allocator
+	node.synchronizer = synchronizer
+
+	return node, nil
 }
 
 // An ID is a custom type used for a snowflake ID.  This is used so we can
@@ -160,6 +196,11 @@ func (n *Node) Generate() ID {
 		(n.node << n.nodeShift) |
 		(n.step),
 	)
+
+	// Synchronize time
+	if n.synchronizer != nil {
+		n.synchronizer.Async(r.Time())
+	}
 
 	return r
 }
