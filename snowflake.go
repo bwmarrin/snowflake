@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -226,13 +227,21 @@ func (f ID) Base32() string {
 // doing any interoperation.
 func ParseBase32(b []byte) (ID, error) {
 
-	var id int64
+	var id uint64
 
 	for i := range b {
 		if decodeBase32Map[b[i]] == 0xFF {
 			return -1, ErrInvalidBase32
 		}
-		id = id*32 + int64(decodeBase32Map[b[i]])
+		digit := uint64(decodeBase32Map[b[i]])
+		// Reject values that do not fit in a positive int64 snowflake ID.
+		if id > (math.MaxUint64-digit)/32 {
+			return -1, ErrInvalidBase32
+		}
+		id = id*32 + digit
+		if id > math.MaxInt64 {
+			return -1, ErrInvalidBase32
+		}
 	}
 
 	return ID(id), nil
@@ -273,13 +282,21 @@ func (f ID) Base58() string {
 // ParseBase58 parses a base58 []byte into a snowflake ID
 func ParseBase58(b []byte) (ID, error) {
 
-	var id int64
+	var id uint64
 
 	for i := range b {
 		if decodeBase58Map[b[i]] == 0xFF {
 			return -1, ErrInvalidBase58
 		}
-		id = id*58 + int64(decodeBase58Map[b[i]])
+		digit := uint64(decodeBase58Map[b[i]])
+		// Reject values that do not fit in a positive int64 snowflake ID.
+		if id > (math.MaxUint64-digit)/58 {
+			return -1, ErrInvalidBase58
+		}
+		id = id*58 + digit
+		if id > math.MaxInt64 {
+			return -1, ErrInvalidBase58
+		}
 	}
 
 	return ID(id), nil
