@@ -512,6 +512,24 @@ func TestParseBase32(t *testing.T) {
 			want:    -1,
 			wantErr: true,
 		},
+		{
+			name:    "max int64",
+			arg:     "8999999999999",
+			want:    9223372036854775807,
+			wantErr: false,
+		},
+		{
+			name:    "overflow int64",
+			arg:     "e999999999999",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "overflow uint64 wrap",
+			arg:     "byyyyyyyyyyyyy",
+			want:    -1,
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -561,6 +579,24 @@ func TestParseBase58(t *testing.T) {
 		{
 			name:    "l not allowed",
 			arg:     "ljgmnx8Js8A",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "max int64",
+			arg:     "npL6MjP8Qfc",
+			want:    9223372036854775807,
+			wantErr: false,
+		},
+		{
+			name:    "overflow int64",
+			arg:     "npL6MjP8Qfd",
+			want:    -1,
+			wantErr: true,
+		},
+		{
+			name:    "overflow uint64 wrap",
+			arg:     "JPwcyDCgEuq",
 			want:    -1,
 			wantErr: true,
 		},
