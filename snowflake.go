@@ -119,6 +119,7 @@ func NewNode(node int64) (*Node, error) {
 	n.stepMask = -1 ^ (-1 << StepBits)
 	n.timeShift = NodeBits + StepBits
 	n.nodeShift = StepBits
+	n.time = -1
 
 	if n.node < 0 || n.node > n.nodeMax {
 		return nil, errors.New("Node number must be between 0 and " + strconv.FormatInt(n.nodeMax, 10))
@@ -142,21 +143,27 @@ func (n *Node) Generate() ID {
 
 	now := time.Since(n.epoch).Milliseconds()
 
-	if now == n.time {
+	if n.time < 0 {
+		n.step = 0
+		n.time = now
+	} else if now <= n.time {
 		n.step = (n.step + 1) & n.stepMask
 
 		if n.step == 0 {
 			for now <= n.time {
+				if n.time > now {
+					time.Sleep(time.Duration(n.time-now) * time.Millisecond)
+				}
 				now = time.Since(n.epoch).Milliseconds()
 			}
+			n.time = now
 		}
 	} else {
 		n.step = 0
+		n.time = now
 	}
 
-	n.time = now
-
-	r := ID((now)<<n.timeShift |
+	r := ID((n.time)<<n.timeShift |
 		(n.node << n.nodeShift) |
 		(n.step),
 	)

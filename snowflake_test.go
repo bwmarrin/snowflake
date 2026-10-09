@@ -3,6 +3,7 @@ package snowflake
 import (
 	"bytes"
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -56,6 +57,129 @@ func TestRace(t *testing.T) {
 		node.Generate()
 	}
 
+}
+
+func TestGenerateSameTimestampUniqueness(t *testing.T) {
+	node, err := NewNode(1)
+	if err != nil {
+		t.Fatalf("failed to create node: %v", err)
+	}
+
+	const count = 2048
+	ids := make(map[ID]struct{}, count)
+	var prev ID
+	for i := 0; i < count; i++ {
+		id := node.Generate()
+		if id <= prev {
+			t.Fatalf("id %d not strictly greater than previous %d at index %d", id, prev, i)
+		}
+		if _, exists := ids[id]; exists {
+			t.Fatalf("duplicate id generated: %d", id)
+		}
+		ids[id] = struct{}{}
+		prev = id
+	}
+}
+
+func TestGenerateClockDriftBackwards(t *testing.T) {
+	node, err := NewNode(2)
+	if err != nil {
+		t.Fatalf("failed to create node: %v", err)
+	}
+
+	const count = 4000
+	ids := make(map[ID]struct{}, count)
+	var prev ID
+
+	for i := 0; i < count; i++ {
+		if i == 2000 {
+			// Simulate backward clock drift by advancing node.time ahead of the system clock.
+			node.mu.Lock()
+			node.time += 5
+			node.mu.Unlock()
+		}
+		id := node.Generate()
+		if id <= prev {
+			t.Fatalf("id %d not strictly greater than previous %d at index %d", id, prev, i)
+		}
+		if _, exists := ids[id]; exists {
+			t.Fatalf("duplicate id generated on clock drift: %d", id)
+		}
+		ids[id] = struct{}{}
+		prev = id
+	}
+}
+
+func TestGenerateConcurrentUniqueness(t *testing.T) {
+	node, err := NewNode(3)
+	if err != nil {
+		t.Fatalf("failed to create node: %v", err)
+	}
+
+	const goroutines = 20
+	const perGoroutine = 1000
+	const total = goroutines * perGoroutine
+
+	idChan := make(chan ID, total)
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+
+	for g := 0; g < goroutines; g++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < perGoroutine; i++ {
+				idChan <- node.Generate()
+			}
+		}()
+	}
+
+	wg.Wait()
+	close(idChan)
+
+	ids := make(map[ID]struct{}, total)
+	for id := range idChan {
+		if _, exists := ids[id]; exists {
+			t.Fatalf("duplicate id detected in concurrent generation: %d", id)
+		}
+		ids[id] = struct{}{}
+	}
+
+	if len(ids) != total {
+		t.Fatalf("expected %d unique ids, got %d", total, len(ids))
+	}
+}
+
+func TestGenerateSequenceWrap(t *testing.T) {
+	origNodeBits := NodeBits
+	origStepBits := StepBits
+	defer func() {
+		NodeBits = origNodeBits
+		StepBits = origStepBits
+	}()
+
+	NodeBits = 10
+	StepBits = 2
+
+	node, err := NewNode(1)
+	if err != nil {
+		t.Fatalf("failed to create node: %v", err)
+	}
+
+	const count = 20
+	ids := make(map[ID]struct{}, count)
+	var prev ID
+
+	for i := 0; i < count; i++ {
+		id := node.Generate()
+		if id <= prev {
+			t.Fatalf("id %d not strictly greater than previous %d at index %d", id, prev, i)
+		}
+		if _, exists := ids[id]; exists {
+			t.Fatalf("duplicate id generated during sequence wrap: %d", id)
+		}
+		ids[id] = struct{}{}
+		prev = id
+	}
 }
 
 //******************************************************************************
