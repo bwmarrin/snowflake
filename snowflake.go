@@ -54,6 +54,9 @@ var ErrInvalidBase58 = errors.New("invalid base58")
 // ErrInvalidBase32 is returned by ParseBase32 when given an invalid []byte
 var ErrInvalidBase32 = errors.New("invalid base32")
 
+// ErrInvalidBase64 is returned by ParseIntBase64 when given an invalid base64 string
+var ErrInvalidBase64 = errors.New("invalid base64")
+
 // Create maps for decoding Base58/Base32.
 // This speeds up the process tremendously.
 func init() {
@@ -285,19 +288,46 @@ func ParseBase58(b []byte) (ID, error) {
 	return ID(id), nil
 }
 
-// Base64 returns a base64 string of the snowflake ID
+// Base64 returns a base64 string of the snowflake ID using the 8-byte binary
+// representation of the snowflake ID, encoded as a big endian integer.
 func (f ID) Base64() string {
-	return base64.StdEncoding.EncodeToString(f.Bytes())
+	return f.IntBase64()
 }
 
-// ParseBase64 converts a base64 string into a snowflake ID
+// ParseBase64 converts a base64 string into a snowflake ID. It supports both the
+// 8-byte binary representation and legacy string-based base64 representation.
 func ParseBase64(id string) (ID, error) {
 	b, err := base64.StdEncoding.DecodeString(id)
 	if err != nil {
 		return -1, err
 	}
+	if len(b) == 8 {
+		var arr [8]byte
+		copy(arr[:], b)
+		return ParseIntBytes(arr), nil
+	}
 	return ParseBytes(b)
+}
 
+// IntBase64 returns a base64 string of the snowflake ID using the 8-byte binary
+// representation of the snowflake ID, encoded as a big endian integer.
+func (f ID) IntBase64() string {
+	b := f.IntBytes()
+	return base64.StdEncoding.EncodeToString(b[:])
+}
+
+// ParseIntBase64 converts a base64 string of the 8-byte binary representation into a snowflake ID
+func ParseIntBase64(id string) (ID, error) {
+	b, err := base64.StdEncoding.DecodeString(id)
+	if err != nil {
+		return -1, err
+	}
+	if len(b) != 8 {
+		return -1, ErrInvalidBase64
+	}
+	var arr [8]byte
+	copy(arr[:], b)
+	return ParseIntBytes(arr), nil
 }
 
 // Bytes returns a byte slice of the snowflake ID

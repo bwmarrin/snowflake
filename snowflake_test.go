@@ -77,6 +77,7 @@ func TestPrintAll(t *testing.T) {
 	t.Logf("Base36   : %#v", id.Base36())
 	t.Logf("Base58   : %#v", id.Base58())
 	t.Logf("Base64   : %#v", id.Base64())
+	t.Logf("IntBase64: %#v", id.IntBase64())
 	t.Logf("Bytes    : %#v", id.Bytes())
 	t.Logf("IntBytes : %#v", id.IntBytes())
 
@@ -243,27 +244,146 @@ func TestBase64(t *testing.T) {
 		t.Fatalf("error creating NewNode, %s", err)
 	}
 
-	oID := node.Generate()
-	i := oID.Base64()
+	for i := 0; i < 100; i++ {
+		oID := node.Generate()
+		b64 := oID.Base64()
 
-	pID, err := ParseBase64(i)
-	if err != nil {
-		t.Fatalf("error parsing, %s", err)
-	}
-	if pID != oID {
-		t.Fatalf("pID %v != oID %v", pID, oID)
+		if len(b64) != 12 {
+			t.Fatalf("expected Base64 length of 12 for 8 bytes, got %d (%s)", len(b64), b64)
+		}
+
+		pID, err := ParseBase64(b64)
+		if err != nil {
+			t.Fatalf("error parsing, %s", err)
+		}
+		if pID != oID {
+			t.Fatalf("pID %v != oID %v", pID, oID)
+		}
 	}
 
+	// Legacy string-based Base64 encoding of "1116819494660997120"
 	ms := `MTExNjgxOTQ5NDY2MDk5NzEyMA==`
-	_, err = ParseBase64(ms)
+	pID, err := ParseBase64(ms)
 	if err != nil {
-		t.Fatalf("error parsing, %s", err)
+		t.Fatalf("error parsing legacy base64, %s", err)
+	}
+	if pID.Int64() != 1116819494660997120 {
+		t.Fatalf("legacy pID %v != expected 1116819494660997120", pID.Int64())
 	}
 
+	// Specific known 8-byte binary Base64 value
+	knownID := ID(1116823421972381696)
+	expectedB64 := "D3/A/C+AAAA="
+	if knownID.Base64() != expectedB64 {
+		t.Fatalf("knownID.Base64() %s != %s", knownID.Base64(), expectedB64)
+	}
+	pID, err = ParseBase64(expectedB64)
+	if err != nil {
+		t.Fatalf("error parsing knownID base64, %s", err)
+	}
+	if pID != knownID {
+		t.Fatalf("pID %v != knownID %v", pID, knownID)
+	}
+
+	// Zero ID
+	zeroID := ID(0)
+	zeroB64 := "AAAAAAAAAAA="
+	if zeroID.Base64() != zeroB64 {
+		t.Fatalf("zeroID.Base64() %s != %s", zeroID.Base64(), zeroB64)
+	}
+	pID, err = ParseBase64(zeroB64)
+	if err != nil {
+		t.Fatalf("error parsing zeroID base64, %s", err)
+	}
+	if pID != zeroID {
+		t.Fatalf("pID %v != zeroID %v", pID, zeroID)
+	}
+
+	// Invalid Base64 syntax (missing padding)
 	ms = `MTExNjgxOTQ5NDY2MDk5NzEyMA`
 	_, err = ParseBase64(ms)
 	if err == nil {
-		t.Fatalf("no error parsing, %s", err)
+		t.Fatalf("no error parsing invalid base64 %s", ms)
+	}
+
+	// Invalid Base64 payload (not 8 bytes and not a decimal number)
+	// "bm90X2FfbnVtYmVy" decodes to "not_a_number" (12 bytes)
+	_, err = ParseBase64("bm90X2FfbnVtYmVy")
+	if err == nil {
+		t.Fatalf("expected error parsing non-numeric legacy base64 payload")
+	}
+}
+
+func TestIntBase64(t *testing.T) {
+	node, err := NewNode(0)
+	if err != nil {
+		t.Fatalf("error creating NewNode, %s", err)
+	}
+
+	for i := 0; i < 100; i++ {
+		oID := node.Generate()
+		b64 := oID.IntBase64()
+
+		if len(b64) != 12 {
+			t.Fatalf("expected IntBase64 length of 12 for 8 bytes, got %d (%s)", len(b64), b64)
+		}
+		if b64 != oID.Base64() {
+			t.Fatalf("IntBase64 %s != Base64 %s", b64, oID.Base64())
+		}
+
+		pID, err := ParseIntBase64(b64)
+		if err != nil {
+			t.Fatalf("error parsing, %s", err)
+		}
+		if pID != oID {
+			t.Fatalf("pID %v != oID %v", pID, oID)
+		}
+	}
+
+	knownID := ID(1116823421972381696)
+	expectedB64 := "D3/A/C+AAAA="
+	if knownID.IntBase64() != expectedB64 {
+		t.Fatalf("knownID.IntBase64() %s != %s", knownID.IntBase64(), expectedB64)
+	}
+	pID, err := ParseIntBase64(expectedB64)
+	if err != nil {
+		t.Fatalf("error parsing knownID, %s", err)
+	}
+	if pID != knownID {
+		t.Fatalf("pID %v != knownID %v", pID, knownID)
+	}
+
+	// Zero ID
+	zeroID := ID(0)
+	zeroB64 := "AAAAAAAAAAA="
+	if zeroID.IntBase64() != zeroB64 {
+		t.Fatalf("zeroID.IntBase64() %s != %s", zeroID.IntBase64(), zeroB64)
+	}
+	pID, err = ParseIntBase64(zeroB64)
+	if err != nil {
+		t.Fatalf("error parsing zeroID int base64, %s", err)
+	}
+	if pID != zeroID {
+		t.Fatalf("pID %v != zeroID %v", pID, zeroID)
+	}
+
+	// Invalid base64 syntax
+	_, err = ParseIntBase64("invalid_base64!!!")
+	if err == nil {
+		t.Fatalf("expected error parsing corrupt base64")
+	}
+
+	// Valid base64 but invalid length (not 8 bytes)
+	// Legacy string base64 is 19 bytes decoded
+	_, err = ParseIntBase64("MTExNjgxOTQ5NDY2MDk5NzEyMA==")
+	if err != ErrInvalidBase64 {
+		t.Fatalf("expected ErrInvalidBase64 for 19-byte decoded base64, got %v", err)
+	}
+
+	// Base64 of 4 bytes: "AAAAAA=="
+	_, err = ParseIntBase64("AAAAAA==")
+	if err != ErrInvalidBase64 {
+		t.Fatalf("expected ErrInvalidBase64 for 4-byte decoded base64, got %v", err)
 	}
 }
 
@@ -420,6 +540,60 @@ func BenchmarkBase58(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		sf.Base58()
+	}
+}
+
+func BenchmarkParseBase64(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+	b64 := sf.Base64()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, _ = ParseBase64(b64)
+	}
+}
+
+func BenchmarkBase64(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		sf.Base64()
+	}
+}
+
+func BenchmarkParseIntBase64(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+	b64 := sf.IntBase64()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		_, _ = ParseIntBase64(b64)
+	}
+}
+
+func BenchmarkIntBase64(b *testing.B) {
+
+	node, _ := NewNode(1)
+	sf := node.Generate()
+
+	b.ReportAllocs()
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		sf.IntBase64()
 	}
 }
 func BenchmarkGenerate(b *testing.B) {
